@@ -117,13 +117,13 @@ def run_bounded_atl_checking(cgs, formula, cost_filter: CostFilter, logic: str):
         error_msg = parser.errors[0] if parser.errors else "Syntax error in formula"
         return create_error_response("syntax", error_msg)
 
-    root = build_resolved_formula_tree(cgs, res_parsing)
+    root = build_resolved_formula_tree(cgs, res_parsing, parser)
     if root is None:
         return create_error_response(
             "semantic", "Atomic proposition not found in model"
         )
 
-    solve_tree(cgs, root, cost_filter=cost_filter, logic=logic)
+    solve_tree(cgs, root, cost_filter=cost_filter, logic=logic, parser=parser)
 
     is_satisfied = verify_initial_state(cgs.initial_state, root.value)
     return format_model_checking_result(root.value, cgs.initial_state, is_satisfied)

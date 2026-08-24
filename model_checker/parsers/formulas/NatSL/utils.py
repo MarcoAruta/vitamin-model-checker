@@ -20,7 +20,7 @@ def validate_bindings(parsed_formula):
             )
 
 
-def _extract_agents_by_quantifier(parsed_formula, quantifier_char):
+def extract_agents_by_quantifier(parsed_formula, quantifier_char):
     """Extract agent numbers for variables bound to the given quantifier (E or A)."""
     quantifiers, binding_pairs, _ = parsed_formula
     variables = [var for q, var, _ in quantifiers if q == quantifier_char]
@@ -28,16 +28,6 @@ def _extract_agents_by_quantifier(parsed_formula, quantifier_char):
     return [
         int(map_vars_to_agents[var]) for var in variables if var in map_vars_to_agents
     ]
-
-
-def extract_existential_agents(parsed_formula):
-    """Extract existential agents from the NatSL formula."""
-    return _extract_agents_by_quantifier(parsed_formula, "E")
-
-
-def extract_universal_agents(parsed_formula):
-    """Extract universal agents from the NatSL formula."""
-    return _extract_agents_by_quantifier(parsed_formula, "A")
 
 
 def normalize_formula(formula):

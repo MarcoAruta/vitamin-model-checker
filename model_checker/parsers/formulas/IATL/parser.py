@@ -134,13 +134,9 @@ class IATLParser(BaseLogicParser):
             return False
         if not isinstance(result, tuple):
             return True
-
-        try:
-            return validate_ast(
-                result,
-                _IATL_VALID_OPERATORS,
-                coalition_pattern=_COALITION_EXIST_PATTERN,
-                extra_atom_patterns=(_COALITION_UNIVERSAL_PATTERN,),
-            )
-        except Exception:
-            return False
+        return validate_ast(
+            result,
+            _IATL_VALID_OPERATORS,
+            coalition_pattern=_COALITION_EXIST_PATTERN,
+            extra_atom_patterns=(_COALITION_UNIVERSAL_PATTERN,),
+        )

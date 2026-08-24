@@ -74,8 +74,18 @@ def handle_wallet_coalition_until(cgs, node, transition_cache):
     coalition, coalition_agents, constraints = extract_coalition_and_constraints(
         node.value
     )
-    states1 = parse_state_set_literal(node.left.value)
-    states2 = parse_state_set_literal(node.right.value)
+    states1 = apply_wallet_constraints(
+        cgs,
+        coalition_agents,
+        constraints,
+        parse_state_set_literal(node.left.value),
+    )
+    states2 = apply_wallet_constraints(
+        cgs,
+        coalition_agents,
+        constraints,
+        parse_state_set_literal(node.right.value),
+    )
 
     def update_with_skip(p):
         p_indices = state_names_to_indices(cgs, p)

@@ -8,6 +8,7 @@ tokens and grammar rules.
 import inspect
 import logging
 import os
+import sys
 from typing import Any
 
 import ply.lex as lex
@@ -156,8 +157,6 @@ class BaseLogicParser:
         parser_dir = os.path.dirname(parser_file)
         generated_dir = os.path.join(parser_dir, "generated")
         os.makedirs(generated_dir, exist_ok=True)
-
-        import sys
 
         if generated_dir not in sys.path:
             sys.path.insert(0, generated_dir)

@@ -732,7 +732,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        81,
+        79,
     ),
     (
         "expression -> EXIST expression UNTIL expression",
@@ -740,7 +740,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        82,
+        80,
     ),
     (
         "expression -> FORALL expression RELEASE expression",
@@ -748,7 +748,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        83,
+        81,
     ),
     (
         "expression -> EXIST expression RELEASE expression",
@@ -756,7 +756,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        84,
+        82,
     ),
     (
         "expression -> FORALL GLOBALLY expression",
@@ -764,7 +764,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        88,
+        86,
     ),
     (
         "expression -> FORALL NEXT expression",
@@ -772,7 +772,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        89,
+        87,
     ),
     (
         "expression -> FORALL EVENTUALLY expression",
@@ -780,7 +780,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        90,
+        88,
     ),
     (
         "expression -> EXIST GLOBALLY expression",
@@ -788,7 +788,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        91,
+        89,
     ),
     (
         "expression -> EXIST NEXT expression",
@@ -796,7 +796,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        92,
+        90,
     ),
     (
         "expression -> EXIST EVENTUALLY expression",
@@ -804,7 +804,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        93,
+        91,
     ),
     (
         "expression -> expression AND expression",
@@ -812,7 +812,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "shared_parser.py",
-        107,
+        108,
     ),
     (
         "expression -> expression OR expression",
@@ -820,7 +820,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "shared_parser.py",
-        108,
+        109,
     ),
     (
         "expression -> expression IMPLIES expression",
@@ -828,7 +828,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "shared_parser.py",
-        109,
+        110,
     ),
     (
         "expression -> NOT expression",
@@ -836,7 +836,7 @@ _lr_productions = [
         2,
         "p_expression_not",
         "shared_parser.py",
-        113,
+        114,
     ),
     (
         "expression -> LPAREN expression RPAREN",
@@ -844,7 +844,7 @@ _lr_productions = [
         3,
         "p_expression_group",
         "shared_parser.py",
-        117,
+        118,
     ),
     (
         "expression -> FALSE",
@@ -852,7 +852,7 @@ _lr_productions = [
         1,
         "p_expression_boolean",
         "shared_parser.py",
-        121,
+        122,
     ),
     (
         "expression -> TRUE",
@@ -860,7 +860,7 @@ _lr_productions = [
         1,
         "p_expression_boolean",
         "shared_parser.py",
-        122,
+        123,
     ),
     (
         "expression -> PROP",
@@ -868,6 +868,6 @@ _lr_productions = [
         1,
         "p_expression_prop",
         "shared_parser.py",
-        126,
+        127,
     ),
 ]

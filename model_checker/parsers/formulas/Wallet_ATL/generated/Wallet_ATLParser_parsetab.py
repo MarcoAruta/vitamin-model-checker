@@ -480,7 +480,7 @@ _lr_productions = [
         1,
         "p_expression_boolean",
         "shared_parser.py",
-        121,
+        122,
     ),
     (
         "expression -> TRUE",
@@ -488,7 +488,7 @@ _lr_productions = [
         1,
         "p_expression_boolean",
         "shared_parser.py",
-        122,
+        123,
     ),
     (
         "expression -> NOT expression",

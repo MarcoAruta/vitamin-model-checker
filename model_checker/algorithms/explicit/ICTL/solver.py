@@ -18,70 +18,80 @@ from model_checker.algorithms.explicit.ICTL.operators import (
     handle_not,
     handle_or,
 )
-from model_checker.parsers.formulas.ICTL.parser import verifyICTL
-
+from model_checker.parsers.formula_parser_factory import FormulaParserFactory
 
 if TYPE_CHECKING:
     from model_checker.algorithms.explicit.ICTL.checker import ICTLModelChecker
     from model_checker.utils.formula_tree import FormulaTreeNode
 
 
-def _unary_handler(checker: "ICTLModelChecker", node: "FormulaTreeNode") -> Any | None:
+def _unary_handler(
+    parser: Any, checker: "ICTLModelChecker", node: "FormulaTreeNode"
+) -> Any | None:
     val = node.value
-    if verifyICTL("NOT", val):
+    if parser.verify("NOT", val):
         return handle_not
-    if verifyICTL("FORALL", val) and verifyICTL("NEXT", val):
+    if parser.verify("FORALL", val) and parser.verify("NEXT", val):
         return handle_ax
-    if verifyICTL("EXIST", val) and verifyICTL("NEXT", val):
+    if parser.verify("EXIST", val) and parser.verify("NEXT", val):
         return handle_ex
-    if verifyICTL("EXIST", val) and verifyICTL("GLOBALLY", val):
+    if parser.verify("EXIST", val) and parser.verify("GLOBALLY", val):
         return handle_eg
-    if verifyICTL("FORALL", val) and verifyICTL("GLOBALLY", val):
+    if parser.verify("FORALL", val) and parser.verify("GLOBALLY", val):
         return handle_ag
-    if verifyICTL("EXIST", val) and verifyICTL("EVENTUALLY", val):
+    if parser.verify("EXIST", val) and parser.verify("EVENTUALLY", val):
         return handle_ef
-    if verifyICTL("FORALL", val) and verifyICTL("EVENTUALLY", val):
+    if parser.verify("FORALL", val) and parser.verify("EVENTUALLY", val):
         return handle_af
     return None
 
 
-def _binary_handler(checker: "ICTLModelChecker", node: "FormulaTreeNode") -> Any | None:
+def _binary_handler(
+    parser: Any, checker: "ICTLModelChecker", node: "FormulaTreeNode"
+) -> Any | None:
     val = node.value
-    if verifyICTL("OR", val):
+    if parser.verify("OR", val):
         return handle_or
-    if verifyICTL("AND", val):
+    if parser.verify("AND", val):
         return handle_and
-    if verifyICTL("IMPLIES", val):
+    if parser.verify("IMPLIES", val):
         return handle_implies
-    if verifyICTL("EXIST", val) and verifyICTL("UNTIL", val):
+    if parser.verify("EXIST", val) and parser.verify("UNTIL", val):
         return handle_eu
-    if verifyICTL("FORALL", val) and verifyICTL("UNTIL", val):
+    if parser.verify("FORALL", val) and parser.verify("UNTIL", val):
         return handle_au
-    if verifyICTL("EXIST", val) and verifyICTL("RELEASE", val):
+    if parser.verify("EXIST", val) and parser.verify("RELEASE", val):
         return handle_er
-    if verifyICTL("FORALL", val) and verifyICTL("RELEASE", val):
+    if parser.verify("FORALL", val) and parser.verify("RELEASE", val):
         return handle_ar
     return None
 
 
-def solve_tree(checker: "ICTLModelChecker", node: "FormulaTreeNode") -> None:
+def solve_tree(
+    checker: "ICTLModelChecker",
+    node: "FormulaTreeNode",
+    parser: Any | None = None,
+) -> None:
     """Evaluate the formula tree bottom-up."""
+    if parser is None:
+        parser = FormulaParserFactory.get_parser_instance("ICTL")
+
     if node.left is not None:
-        solve_tree(checker, node.left)
+        solve_tree(checker, node.left, parser)
     if node.right is not None:
-        solve_tree(checker, node.right)
+        solve_tree(checker, node.right, parser)
 
     if node.right is None:
         if node.left is None:
             return
-        handler = _unary_handler(checker, node)
+        handler = _unary_handler(parser, checker, node)
         if handler is None:
             raise ValueError(f"Unsupported ICTL unary operator: {node.value!r}")
         handler(checker, node)
         return
 
     if node.left is not None and node.right is not None:
-        handler = _binary_handler(checker, node)
+        handler = _binary_handler(parser, checker, node)
         if handler is None:
             raise ValueError(f"Unsupported ICTL binary operator: {node.value!r}")
         handler(checker, node)

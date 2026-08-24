@@ -56,3 +56,19 @@ def test_syntax_error():
     result = model_checking("{J2}X p (", str(_FIXTURE))
     assert "error" in result
     assert result["error"]["type"] == "syntax"
+
+
+@pytest.mark.parametrize(
+    ("formula", "expected_states", "initial_true"),
+    [
+        ("true", {"s0", "s1"}, True),
+        ("false", set(), False),
+        ("#", set(), False),
+        ("@", {"s0", "s1"}, True),
+        ("x>20", set(), False),
+    ],
+)
+def test_tol_booleans_and_clock_gt(formula, expected_states, initial_true):
+    result = model_checking(formula, str(_FIXTURE))
+    assert _states_from_result(result) == expected_states
+    assert result["initial_state"] == f"Initial state s0: {initial_true}"

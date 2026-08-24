@@ -25,8 +25,7 @@ from model_checker.parsers.formulas.NatSL.conversion import (
     convert_parsed_natsl_to_natatl_separated,
 )
 from model_checker.parsers.formulas.NatSL.utils import (
-    extract_existential_agents,
-    extract_universal_agents,
+    extract_agents_by_quantifier,
     normalize_formula,
     validate_bindings,
 )
@@ -83,8 +82,8 @@ def model_checking(natsl_formula: str, model_path: str) -> dict[str, Any]:
         if parsed:
             try:
                 validate_bindings(parsed)
-                existential_agents = extract_existential_agents(parsed)
-                universal_agents = extract_universal_agents(parsed)
+                existential_agents = extract_agents_by_quantifier(parsed, "E")
+                universal_agents = extract_agents_by_quantifier(parsed, "A")
                 n_universal = len(universal_agents)
 
                 logger.debug("Existential agents: %s", existential_agents)

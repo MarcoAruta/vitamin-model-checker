@@ -5,7 +5,7 @@ _tabversion = "3.10"
 
 _lr_method = "LALR"
 
-_lr_signature = "formularightIMPLIESleftORleftANDrightNOTrightUNTILrightGLOBALLYNEXTEVENTUALLYAGENT AND BOUND COLON COMMA EVENTUALLY EXIST FALSE FORALL GLOBALLY IMPLIES LPAREN NEXT NOT OR PROP RPAREN TRUE UNTILformula : quantifiers COLON binding_pairs temporal_expressionquantifiers : quantifier\n        | quantifiers quantifierquantifier : EXIST opt_bound PROP\n        | FORALL opt_bound PROPopt_bound : BOUND\n        | emptyexpression : expression AND expression\n        | expression OR expression\n        | expression IMPLIES expressionexpression : NOT expressionempty :expression : LPAREN expression RPARENbinding_pairs : binding_pair\n        | binding_pairs binding_pairexpression : FALSE\n        | TRUEexpression : PROPbinding_pair : LPAREN PROP COMMA AGENT RPARENtemporal_expression : negation_expression\n        | EVENTUALLY PROPnegation_expression : NOT EVENTUALLY PROP"
+_lr_signature = "formularightIMPLIESleftORleftANDrightNOTrightUNTILrightGLOBALLYNEXTEVENTUALLYAGENT AND BOUND COLON COMMA EVENTUALLY EXIST FALSE FORALL GLOBALLY IMPLIES LPAREN NEXT NOT OR PROP RPAREN TRUE UNTILformula : quantifiers COLON binding_pairs temporal_expressionquantifiers : quantifier\n        | quantifiers quantifierquantifier : EXIST opt_bound PROP\n        | FORALL opt_bound PROPopt_bound : BOUND\n        | emptyexpression : expression AND expression\n        | expression OR expression\n        | expression IMPLIES expressionexpression : NOT expressionempty :expression : LPAREN expression RPARENbinding_pairs : binding_pair\n        | binding_pairs binding_pairexpression : FALSE\n        | TRUEbinding_pair : LPAREN PROP COMMA AGENT RPARENexpression : PROPtemporal_expression : negation_expression\n        | EVENTUALLY PROPnegation_expression : NOT EVENTUALLY PROP"
 
 _lr_action_items = {
     "EXIST": (
@@ -123,7 +123,7 @@ _lr_action_items = {
             14,
             -14,
             -15,
-            -19,
+            -18,
         ],
     ),
     "EVENTUALLY": (
@@ -139,7 +139,7 @@ _lr_action_items = {
             -14,
             -15,
             24,
-            -19,
+            -18,
         ],
     ),
     "NOT": (
@@ -153,7 +153,7 @@ _lr_action_items = {
             21,
             -14,
             -15,
-            -19,
+            -18,
         ],
     ),
     "COMMA": (
@@ -323,7 +323,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "shared_parser.py",
-        107,
+        108,
     ),
     (
         "expression -> expression OR expression",
@@ -331,7 +331,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "shared_parser.py",
-        108,
+        109,
     ),
     (
         "expression -> expression IMPLIES expression",
@@ -339,7 +339,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "shared_parser.py",
-        109,
+        110,
     ),
     (
         "expression -> NOT expression",
@@ -347,7 +347,7 @@ _lr_productions = [
         2,
         "p_expression_not",
         "shared_parser.py",
-        113,
+        114,
     ),
     ("empty -> <empty>", "empty", 0, "p_empty", "parser.py", 115),
     (
@@ -356,7 +356,7 @@ _lr_productions = [
         3,
         "p_expression_group",
         "shared_parser.py",
-        117,
+        118,
     ),
     (
         "binding_pairs -> binding_pair",
@@ -380,7 +380,7 @@ _lr_productions = [
         1,
         "p_expression_boolean",
         "shared_parser.py",
-        121,
+        122,
     ),
     (
         "expression -> TRUE",
@@ -388,15 +388,7 @@ _lr_productions = [
         1,
         "p_expression_boolean",
         "shared_parser.py",
-        122,
-    ),
-    (
-        "expression -> PROP",
-        "expression",
-        1,
-        "p_expression_prop",
-        "shared_parser.py",
-        126,
+        123,
     ),
     (
         "binding_pair -> LPAREN PROP COMMA AGENT RPAREN",
@@ -404,6 +396,14 @@ _lr_productions = [
         5,
         "p_binding_pair",
         "parser.py",
+        127,
+    ),
+    (
+        "expression -> PROP",
+        "expression",
+        1,
+        "p_expression_prop",
+        "shared_parser.py",
         127,
     ),
     (

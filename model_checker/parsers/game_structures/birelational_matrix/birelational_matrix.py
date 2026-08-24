@@ -1,7 +1,11 @@
 """Birelational Matrix parser for ICTL."""
 
-from model_checker.parsers.game_structures.cgs.cgs import CGS
 import numpy as np
+
+from model_checker.algorithms.explicit.ICTL.util.validation import (
+    check_conditions_hold,
+)
+from model_checker.parsers.game_structures.cgs.cgs import CGS
 
 
 class BirelationalMatrix(CGS):
@@ -18,8 +22,4 @@ class BirelationalMatrix(CGS):
 
     def validate_model_structure(self) -> None:
         super().validate_model_structure()
-        from model_checker.algorithms.explicit.ICTL.util.validation import (
-            check_conditions_hold,
-        )
-
         check_conditions_hold(self)

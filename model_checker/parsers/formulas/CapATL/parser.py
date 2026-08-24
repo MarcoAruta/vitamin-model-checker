@@ -206,12 +206,9 @@ class CapATLParser(BaseLogicParser):
             return False
         if not isinstance(result, tuple):
             return True
-
-        if not validate_ast(
+        return validate_ast(
             result,
             _CAPATL_VALID_OPERATORS,
             coalition_pattern=_COALITION_OPERATOR_PATTERN,
             extra_atom_patterns=(_KCAP_PATTERN,),
-        ):
-            return False
-        return True
+        )

@@ -1,6 +1,7 @@
 import re
 
 from model_checker.parsers.game_structures.cgs.cgs import CGS
+from model_checker.parsers.game_structures.cgs.cgs_utils import proposition_index
 
 
 class WalletCGS(CGS):
@@ -261,10 +262,6 @@ class WalletCGS(CGS):
 
     def get_atom_index(self, element):
         """Returns the index of the given atom in the array of atomic propositions."""
-        from model_checker.parsers.game_structures.cgs.cgs_utils import (
-            proposition_index,
-        )
-
         if isinstance(element, (list, tuple)):
             element = " ".join(map(str, element))
         return proposition_index(self.atomic_propositions, element)

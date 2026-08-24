@@ -9,7 +9,7 @@ FormulaInput = str | tuple[str, ...]
 _AND_OPS = frozenset({"&", "and"})
 _OR_OPS = frozenset({"|", "or"})
 _COMBINATORS = _AND_OPS | _OR_OPS
-_BOUND_RE = re.compile(r"(\w+)(>|<|>=|<=|==)(\d+)")
+_BOUND_RE = re.compile(r"(\w+)(>=|<=|==|>|<)(\d+)")
 _RESET_RE = re.compile(r"(\w+)=(\d+)")
 _MAX_CONSTRAINT_RE = re.compile(r"(\w+)\s*(?:==|>=|<=|>|<)\s*(\d+)")
 

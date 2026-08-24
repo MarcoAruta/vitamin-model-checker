@@ -6,8 +6,6 @@ What it handles:
 - Propositions matching [a-zA-Z][a-zA-Z0-9_]*.
 """
 
-from typing import Any
-
 from model_checker.parsers.formulas.parser_utils import (
     PROPOSITION_TOKEN_PATTERN,
     run_common_prechecks,
@@ -108,11 +106,3 @@ class ICTLParser(BaseLogicParser):
         if not isinstance(result, tuple):
             return True
         return validate_ast(result, _ICTL_VALID_OPERATORS)
-
-
-def verifyICTL(token_name: str, string: Any) -> bool:
-    """Helper to verify tokens for the solver"""
-    from model_checker.parsers.formula_parser_factory import FormulaParserFactory
-
-    parser = FormulaParserFactory.get_parser_instance("ICTL")
-    return parser.verify(token_name, string)

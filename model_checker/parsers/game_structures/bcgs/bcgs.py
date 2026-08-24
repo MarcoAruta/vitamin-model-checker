@@ -2,15 +2,15 @@
 
 import numpy as np
 
-from model_checker.parsers.game_structures.cgs.cgs import CGS
+from model_checker.algorithms.explicit.IATL.util.validation import (
+    check_conditions_hold,
+)
 from model_checker.parsers.game_structures.cgs import cgs_parser
+from model_checker.parsers.game_structures.cgs.cgs import CGS
 
 
 class BCGS(CGS):
     """Parser and in-memory representation for an IATL BCGS model file."""
-
-    def __init__(self) -> None:
-        super().__init__()
 
     def _reset_state(self) -> None:
         super()._reset_state()
@@ -45,8 +45,4 @@ class BCGS(CGS):
 
     def validate_model_structure(self) -> None:
         super().validate_model_structure()
-        from model_checker.algorithms.explicit.IATL.util.validation import (
-            check_conditions_hold,
-        )
-
         check_conditions_hold(self)

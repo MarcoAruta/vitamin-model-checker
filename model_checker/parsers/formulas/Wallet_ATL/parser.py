@@ -1,9 +1,9 @@
 """Wallet_ATL parser (PLY-based native subclass) - Standardized Robust Version."""
 
 import re
-import unicodedata
 
 from model_checker.parsers.formulas.parser_utils import (
+    normalize_formula_text,
     run_common_prechecks,
     validate_ast,
     validate_proposition_identifier,
@@ -222,7 +222,7 @@ class Wallet_ATLParser(BaseLogicParser):
                 "type": "binary",
                 "operator": p[2],
                 "left": p[1],
-                "right": p[4],
+                "right": p[3],
             }
 
     def p_expression_prop(self, p):
@@ -256,34 +256,11 @@ class Wallet_ATLParser(BaseLogicParser):
         return False
 
     def parse(self, formula_text, max_coalition=None, n_agent=None, **kwargs):
-        self.errors = []
-
-        # normalize
-        text = unicodedata.normalize("NFKC", formula_text)
-        text = text.replace("\ufeff", "").replace("\u00a0", " ")
-        text = " ".join(text.strip().split())
-        normalized = _COALITION_TEMPORAL_SPACING.sub(">> ", text)
-
-        valid, err = self._pre_validation(normalized)
-        if not valid:
-            if err:
-                self.errors.append(err)
-            return None
+        text = normalize_formula_text(formula_text)
+        text = _COALITION_TEMPORAL_SPACING.sub(">> ", text)
 
         if n_agent is not None and max_coalition is None:
             max_coalition = n_agent
         self.MAX_COALITION = max_coalition if max_coalition is not None else 0
 
-        try:
-            res = super().parse(normalized, **kwargs)
-            if res is None:
-                if not self.errors:
-                    self.errors.append("Syntax or lexical error in formula")
-                return None
-            if not self._post_validation(normalized, res):
-                return None
-            return res
-        except Exception as e:
-            self.logger.debug("Wallet_ATL parse failed: %s", e)
-            self.errors.append(str(e))
-            return None
+        return super().parse(text, **kwargs)

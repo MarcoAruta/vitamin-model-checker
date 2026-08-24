@@ -129,6 +129,24 @@ def test_syntax_error():
     assert result["error"]["type"] == "syntax"
 
 
+@pytest.mark.parametrize(
+    ("formula", "expected_locations", "initial_ok"),
+    [
+        ("true", {"s0"}, True),
+        ("false", set(), False),
+        ("x>5", set(), False),
+        ("forall G p", {"s0"}, True),
+        ("exist F p", {"s0"}, True),
+    ],
+)
+def test_tctl_booleans_clock_gt_and_word_quantifiers(
+    formula, expected_locations, initial_ok
+):
+    result = model_checking(formula, str(_MINIMAL))
+    assert _states(result) == expected_locations
+    assert _initial_satisfied(result) is initial_ok
+
+
 def test_tctl_zeno_cycle():
     # Model has x<=5 invariant on self-loop but no reset.
     # TCTL semantics (without strong non-Zeno requirements) allows infinite 0-time transitions.

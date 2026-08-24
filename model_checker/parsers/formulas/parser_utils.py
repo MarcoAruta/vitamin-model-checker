@@ -4,6 +4,7 @@ Coalition checks, lexer token checks, and pre-parse validation live here.
 """
 
 import re
+import unicodedata
 from collections.abc import Sequence
 
 from model_checker.parsers.syntax_patterns import (
@@ -33,6 +34,13 @@ BOOLEAN_AST_OPERATORS = frozenset(
 
 class CoalitionValueError(Exception):
     """Bad coalition syntax or an agent index outside the allowed range."""
+
+
+def normalize_formula_text(formula: str) -> str:
+    """NFKC-normalize, strip BOM/nbsp, and collapse whitespace."""
+    text = unicodedata.normalize("NFKC", formula)
+    text = text.replace("\ufeff", "").replace("\u00a0", " ")
+    return " ".join(text.strip().split())
 
 
 def validate_proposition_identifier(
@@ -394,6 +402,7 @@ __all__ = [
     "BOOLEAN_AST_OPERATORS",
     "PROPOSITION_TOKEN_PATTERN",
     "natsl_temporal_atom_from_parsed_formula",
+    "normalize_formula_text",
     "run_common_prechecks",
     "validate_ast",
     "validate_coalition",

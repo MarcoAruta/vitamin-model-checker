@@ -766,7 +766,7 @@ _lr_productions = [
         2,
         "p_expression_not",
         "shared_parser.py",
-        113,
+        114,
     ),
     (
         "expression -> LPAREN expression RPAREN",
@@ -774,7 +774,7 @@ _lr_productions = [
         3,
         "p_expression_group",
         "shared_parser.py",
-        117,
+        118,
     ),
     (
         "expression -> FALSE",
@@ -782,7 +782,7 @@ _lr_productions = [
         1,
         "p_expression_boolean",
         "shared_parser.py",
-        121,
+        122,
     ),
     (
         "expression -> TRUE",
@@ -790,7 +790,7 @@ _lr_productions = [
         1,
         "p_expression_boolean",
         "shared_parser.py",
-        122,
+        123,
     ),
     (
         "expression -> expression AND expression",
@@ -822,7 +822,7 @@ _lr_productions = [
         1,
         "p_expression_prop",
         "shared_parser.py",
-        126,
+        127,
     ),
     (
         "expression -> COALITION expression UNTIL expression",

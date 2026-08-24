@@ -6,10 +6,11 @@ What it handles:
 """
 
 import re
-import unicodedata
-from typing import Any
 
-from model_checker.parsers.formulas.parser_utils import run_common_prechecks
+from model_checker.parsers.formulas.parser_utils import (
+    normalize_formula_text,
+    run_common_prechecks,
+)
 from model_checker.parsers.formulas.shared_parser import BaseLogicParser
 from model_checker.parsers.syntax_patterns import TCTL_TOL_PROPOSITION_TOKEN
 
@@ -103,15 +104,24 @@ class ClockExpr(Expr):
 
 
 class SimpleTimeExpr(Expr):
-    def __init__(self, constraints: tuple):
+    def __init__(self, constraints: str):
         super().__init__()
         self.constraints = constraints
 
     def __repr__(self):
-        return "".join(self.constraints)
+        return self.constraints
 
     def __str__(self):
-        return "".join(self.constraints)
+        return self.constraints
+
+
+class BooleanConst(Expr):
+    def __init__(self, value: bool):
+        super().__init__()
+        self.value = value
+
+    def __repr__(self):
+        return "true" if self.value else "false"
 
 
 class DemonicValueError(Exception):
@@ -154,6 +164,8 @@ class TOLParser(BaseLogicParser):
             "not": "NOT",
             "or": "OR",
             "and": "AND",
+            "true": "TRUE",
+            "false": "FALSE",
             "globally": "GLOBALLY",
             "G": "GLOBALLY",
         }
@@ -161,6 +173,10 @@ class TOLParser(BaseLogicParser):
         return t
 
     t_PROP.__doc__ = TCTL_TOL_PROPOSITION_TOKEN
+
+    def t_IMPLIES(self, t):
+        r"->|implies\b"
+        return t
 
     t_WEAK = r"W|weak\b"
     t_FALSE = r"\#|false\b"
@@ -172,10 +188,10 @@ class TOLParser(BaseLogicParser):
         return t
 
     t_DEMONIC = r"{J[1-9]\d*}"
-    t_LESS = r"\<"
+    t_GEQ = r"\>\="
     t_LEQ = r"\<\="
     t_GREATER = r"\>"
-    t_GEQ = r"\>\="
+    t_LESS = r"\<"
     t_CONST = r"\d+"
     t_TIME_SEP = r":|,|with"
     t_DOT = r"\."
@@ -224,7 +240,7 @@ class TOLParser(BaseLogicParser):
     def p_expression_boolean(self, p):
         """expression : FALSE
         | TRUE"""
-        p[0] = p[1]
+        p[0] = BooleanConst(str(p[1]).lower() in {"true", "@"})
 
     def p_expression_freeze(self, p):
         """expression : PROP DOT expression"""
@@ -247,30 +263,19 @@ class TOLParser(BaseLogicParser):
         p[0] = AtomicProp(p[1])
 
     # --- Validation ---
-    def _pre_validation(self, formula) -> tuple[bool, str | None]:
+    def parse(self, formula, **kwargs):
         if isinstance(formula, str):
-            s = unicodedata.normalize("NFKC", formula)
-            s = s.replace("\ufeff", "").replace("\u00a0", " ")
-            s = " ".join(s.strip().split())
-        else:
-            s = formula
+            formula = normalize_formula_text(formula)
+        return super().parse(formula, **kwargs)
 
-        valid, err = run_common_prechecks(
-            s,
-            allow_hash_at=False,
+    def _pre_validation(self, formula) -> tuple[bool, str | None]:
+        return run_common_prechecks(
+            formula,
+            allow_hash_at=True,
             coalition_required=False,
             allow_negative_agents=False,
-            allowed_operators=set("<>(),!&|->{}. "),
+            allowed_operators=set("<>=!&|->:.() {}"),
         )
-        return True, None
 
     def _post_validation(self, formula, result):
         return result is not None
-
-
-def verifyTOL(token_name: str, string: Any) -> bool:
-    """Helper to verify tokens for the solver"""
-    from model_checker.parsers.formula_parser_factory import FormulaParserFactory
-
-    parser = FormulaParserFactory.get_parser_instance("TOL")
-    return parser.verify(token_name, string)

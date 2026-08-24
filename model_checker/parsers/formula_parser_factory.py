@@ -3,7 +3,7 @@
 Creates and manages formula parser instances for temporal logics (CTL, ATL, LTL, etc.).
 """
 
-from threading import Lock
+from threading import Lock, local
 from typing import Any
 
 from model_checker.discovery import (
@@ -11,15 +11,12 @@ from model_checker.discovery import (
 )
 
 
-import threading
-
-
 class FormulaParserFactory:
     """Retrieves parsers for temporal logics, caching instances per-thread for efficiency and thread-safety."""
 
     _parser_classes = {}
     _lock: Lock = Lock()
-    _local = threading.local()
+    _local = local()
 
     @staticmethod
     def get_parser_instance(logic_name: str) -> Any:

@@ -44,6 +44,13 @@ def eval_simple_time_expr(tcgs: "TimedCGS", zone_graph: "ZoneGraph", node) -> No
     )
 
 
+def eval_boolean_const(tcgs: "TimedCGS", node) -> None:
+    if node.value:
+        node.satisfying_states = {str(state) for state in tcgs.states}
+    else:
+        node.satisfying_states = set()
+
+
 def handle_not(tcgs: "TimedCGS", node) -> None:
     all_states = set(tcgs.states)
     node.satisfying_states = compute_boolean_result(

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from model_checker.algorithms.explicit.shared.timed_ast_operators import (
     eval_atomic_prop,
+    eval_boolean_const,
     eval_simple_time_expr,
     handle_and,
     handle_clock_expr,
@@ -21,9 +22,11 @@ from model_checker.algorithms.explicit.TOL.operators import (
     handle_until,
     handle_weak,
 )
+from model_checker.parsers.formula_parser_factory import FormulaParserFactory
 from model_checker.parsers.formulas.TOL.parser import (
     AtomicProp,
     Binary,
+    BooleanConst,
     ClockExpr,
     DemonicBinary,
     DemonicOp,
@@ -31,7 +34,6 @@ from model_checker.parsers.formulas.TOL.parser import (
     FreezeExpr,
     SimpleTimeExpr,
     Unary,
-    verifyTOL,
 )
 
 if TYPE_CHECKING:
@@ -39,40 +41,55 @@ if TYPE_CHECKING:
     from model_checker.parsers.game_structures.timed_cgs.zone_graph import ZoneGraph
 
 
-def solve_tree(tcgs: "TimedCGS", zone_graph: "ZoneGraph", node: Expr) -> None:
+def solve_tree(
+    tcgs: "TimedCGS",
+    zone_graph: "ZoneGraph",
+    node: Expr,
+    parser=None,
+) -> None:
     """Bottom-up AST evaluation."""
+    if parser is None:
+        parser = FormulaParserFactory.get_parser_instance("TOL")
+
     if isinstance(node, AtomicProp):
         eval_atomic_prop(tcgs, node)
+        return
+
+    if isinstance(node, BooleanConst):
+        eval_boolean_const(tcgs, node)
         return
 
     if isinstance(node, SimpleTimeExpr):
         eval_simple_time_expr(tcgs, zone_graph, node)
         return
 
-    solve_ast_children(tcgs, zone_graph, node, solve_tree)
+    def _recurse(t, z, n):
+        solve_tree(t, z, n, parser)
 
-    if isinstance(node, Unary) and verifyTOL("NOT", node.op):
+    solve_ast_children(tcgs, zone_graph, node, _recurse)
+
+    if isinstance(node, Unary) and parser.verify("NOT", node.op):
         handle_not(tcgs, node)
     elif isinstance(node, Binary):
-        if verifyTOL("OR", node.op):
+        if parser.verify("OR", node.op):
             handle_or(node)
-        elif verifyTOL("AND", node.op):
+        elif parser.verify("AND", node.op):
             handle_and(node)
-        elif verifyTOL("IMPLIES", node.op):
+        elif parser.verify("IMPLIES", node.op):
             handle_implies(tcgs, node)
     elif isinstance(node, DemonicOp):
-        if verifyTOL("GLOBALLY", node.op):
+        if parser.verify("GLOBALLY", node.op):
             handle_globally(tcgs, zone_graph, node)
-        elif verifyTOL("NEXT", node.op):
+        elif parser.verify("NEXT", node.op):
             handle_next(tcgs, zone_graph, node)
-        elif verifyTOL("EVENTUALLY", node.op):
+        elif parser.verify("EVENTUALLY", node.op):
             handle_eventually(tcgs, zone_graph, node)
     elif isinstance(node, DemonicBinary):
-        if verifyTOL("UNTIL", node.op):
+        if parser.verify("UNTIL", node.op):
             handle_until(tcgs, zone_graph, node)
-        elif verifyTOL("RELEASE", node.op):
+        elif parser.verify("RELEASE", node.op):
             handle_release(tcgs, zone_graph, node)
-        elif verifyTOL("WEAK", node.op):
+        elif parser.verify("WEAK", node.op):
             handle_weak(tcgs, zone_graph, node)
     elif isinstance(node, ClockExpr):
         handle_clock_expr(tcgs, zone_graph, node)

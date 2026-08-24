@@ -105,12 +105,12 @@ class OATLParser(BaseLogicParser):
             if int(bound_raw) == 0:
                 return (
                     False,
-                    "OATL bound must be a positive integer (>=1) for temporal operators",
+                    "Bound must be a positive integer (>=1) for temporal operators",
                 )
             if len(bound_raw) > 1 and bound_raw.startswith("0"):
                 return (
                     False,
-                    "OATL bound cannot have leading zeros (e.g., use <1><5>, not <1><05>)",
+                    "Bound cannot have leading zeros (e.g., use <1><5>, not <1><05>)",
                 )
 
         if re.search(r"<\d+(?:,\d+)*>\s*[FGXURW]", formula) and not re.search(
@@ -118,7 +118,7 @@ class OATLParser(BaseLogicParser):
         ):
             return (
                 False,
-                "OATL temporal operators require a bound in the form <coalition><k> with k>=1 (e.g., <1><5>F p)",
+                "Temporal operators require a bound in the form <coalition><k> with k>=1 (e.g., <1><5>F p)",
             )
         return True, None
 

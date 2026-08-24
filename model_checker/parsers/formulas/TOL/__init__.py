@@ -1,6 +1,7 @@
 from .parser import (
     AtomicProp,
     Binary,
+    BooleanConst,
     ClockExpr,
     DemonicBinary,
     DemonicOp,
@@ -8,7 +9,6 @@ from .parser import (
     FreezeExpr,
     SimpleTimeExpr,
     Unary,
-    verifyTOL,
 )
 
 METADATA = {"model_type": "timedCGS"}
@@ -17,6 +17,7 @@ __all__ = [
     "METADATA",
     "AtomicProp",
     "Binary",
+    "BooleanConst",
     "ClockExpr",
     "DemonicBinary",
     "DemonicOp",
@@ -24,5 +25,4 @@ __all__ = [
     "FreezeExpr",
     "SimpleTimeExpr",
     "Unary",
-    "verifyTOL",
 ]

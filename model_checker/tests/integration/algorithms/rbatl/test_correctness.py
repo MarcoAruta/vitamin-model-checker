@@ -52,3 +52,12 @@ class TestRBATLSemantics:
         assert states == {"s0", "s1", "s2", "s3", "s4"}
         init_str = result.get("initial_state", "")
         assert ": True" in init_str
+
+    def test_rbatl_true_false_constants(self, rbatl_model):
+        """Boolean constants must resolve via the formula parser, not as atoms."""
+        true_result = _core_rbatl_checking(rbatl_model, "<1><2>F true")
+        assert "error" not in true_result, true_result
+
+        false_result = _core_rbatl_checking(rbatl_model, "<1><2>F false")
+        assert "error" not in false_result, false_result
+        assert extract_states_from_result(false_result) == set()

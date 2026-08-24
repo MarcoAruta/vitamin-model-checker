@@ -45,6 +45,13 @@ def eval_simple_time_expr(tcgs: "TimedCGS", zone_graph: "ZoneGraph", node) -> No
     )
 
 
+def eval_boolean_const(zone_graph: "ZoneGraph", node) -> None:
+    if node.value:
+        node.satisfying_regions = all_regions(zone_graph)
+    else:
+        node.satisfying_regions = set()
+
+
 def handle_not(zone_graph: "ZoneGraph", node) -> None:
     universe = all_regions(zone_graph)
     node.satisfying_regions = universe - node.operand.satisfying_regions

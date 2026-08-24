@@ -90,3 +90,40 @@ def test_tol_parser_freeze_expression():
 
     assert isinstance(ast, FreezeExpr)
     assert ast.clock == "j"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "formula",
+    ["x>5", "x>=5", "x<5", "x<=5", "true", "false"],
+)
+def test_tctl_parser_clock_comparisons_and_booleans(formula):
+    parser = FormulaParserFactory.get_parser_instance("TCTL")
+    assert parser.parse(formula) is not None
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "formula",
+    ["x>5", "x>=5", "true", "false", "#", "@"],
+)
+def test_tol_parser_clock_comparisons_and_booleans(formula):
+    parser = FormulaParserFactory.get_parser_instance("TOL")
+    assert parser.parse(formula) is not None
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("wordy", "compact"),
+    [
+        ("forall G p", "AG p"),
+        ("exist F p", "EF p"),
+    ],
+)
+def test_tctl_parser_forall_exist_keywords(wordy, compact):
+    parser = FormulaParserFactory.get_parser_instance("TCTL")
+    wordy_ast = parser.parse(wordy)
+    compact_ast = parser.parse(compact)
+    assert wordy_ast is not None
+    assert compact_ast is not None
+    assert repr(wordy_ast) == repr(compact_ast)

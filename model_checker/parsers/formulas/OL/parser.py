@@ -112,7 +112,7 @@ class OLParser(BaseLogicParser):
         p[0] = (p[1] + p[2], p[3])
 
     def _validate_demonic(self, demonic_str):
-        """Validate and extract cost value from demonic token like <J5>."""
+        """Validate cost in a demonic token like <J5>."""
         match = OL_DEMONIC_BOUND_FULL_RE.match(demonic_str)
         if not match:
             raise DemonicValueError(f"Invalid demonic token: {demonic_str}")
@@ -121,15 +121,8 @@ class OLParser(BaseLogicParser):
             raise DemonicValueError(
                 f"Demonic cost must be a positive integer, got <J{cost}>"
             )
-        return str(cost)
 
     # === Validation ===
-
-    def parse(self, formula, **kwargs):
-        try:
-            return super().parse(formula, **kwargs)
-        except DemonicValueError:
-            return None
 
     def _pre_validation(self, formula) -> tuple[bool, str | None]:
         return run_common_prechecks(

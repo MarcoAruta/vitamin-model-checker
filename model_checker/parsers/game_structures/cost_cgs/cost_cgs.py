@@ -22,12 +22,6 @@ class CostCGS(CGS):
     get_cost_for_action(action, state) or cost_for_action for cost data.
     """
 
-    # --- Initialization and File Reading ---
-
-    def __init__(self):
-        """Create an empty CostCGS; load data with read_file or read_from_model_object."""
-        super().__init__()
-
     def _reset_state(self):
         super()._reset_state()
         self.costs = []

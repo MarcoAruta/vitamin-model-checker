@@ -7,6 +7,9 @@ from model_checker.algorithms.explicit.CapATL.CapATL import (
     model_checking,
 )
 from model_checker.tests.helpers.model_helpers import extract_states_from_result
+from model_checker.tests.helpers.synthetic_models import (
+    generate_capcgs_linear_chain_model,
+)
 from model_checker.tests.integration.algorithms import capatl
 
 
@@ -80,10 +83,6 @@ class TestCapATLSemantics:
 
     def test_capatl_synthetic_linear_chain(self, temp_file):
         """<{1}>F p holds in every state of a 4-state synthetic capCGS chain."""
-        from model_checker.tests.helpers.synthetic_models import (
-            generate_capcgs_linear_chain_model,
-        )
-
         content = generate_capcgs_linear_chain_model(
             num_states=4, num_agents=2, prop_names=["p"]
         )

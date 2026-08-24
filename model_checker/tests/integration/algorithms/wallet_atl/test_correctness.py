@@ -78,3 +78,21 @@ class TestWalletATLSemantics:
         )
         assert "error" not in blocked, blocked
         assert extract_states_from_result(blocked) == set()
+
+    def test_wallet_until_applies_guards(self, wallet_atl_model):
+        """Until must filter both operands with wallet constraints, like F/X/G."""
+        unconstrained = _core_walletatl_checking(wallet_atl_model, "<<1>> p U q")
+        assert "error" not in unconstrained, unconstrained
+        assert extract_states_from_result(unconstrained) == {"s0", "s1"}
+
+        allowed = _core_walletatl_checking(
+            wallet_atl_model, "<<1:wallet(1, >= 5)>> p U q"
+        )
+        assert "error" not in allowed, allowed
+        assert extract_states_from_result(allowed) == {"s0", "s1"}
+
+        blocked = _core_walletatl_checking(
+            wallet_atl_model, "<<1:wallet(1, >= 10)>> p U q"
+        )
+        assert "error" not in blocked, blocked
+        assert extract_states_from_result(blocked) == set()
