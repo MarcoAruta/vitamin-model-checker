@@ -9,9 +9,11 @@ from collections.abc import Sequence
 
 from model_checker.parsers.syntax_patterns import (
     AGENT_LIST,
+    COALITION_ATL_TOKEN,
     EMPTY_COALITION_RE,
     FORMULA_RESERVED_WORDS,
     NATATL_CAPACITY_RE,
+    NATATL_COALITION_TOKEN,
     NATSL_QUANTIFIER_TOKENS,
     NEGATIVE_AGENT_IN_COALITION_RE,
     PROPOSITION_FULL_RE,
@@ -102,7 +104,7 @@ def validate_release_weak_rejected(
     """
     # After a coalition/bound prefix: standalone R/W (uppercase) or release/weak words.
     if re.search(
-        r"(?:<\d+(?:,\d+)*>)+.*?(?:(?<![A-Za-z0-9_])[RW](?![A-Za-z0-9_])|(?i:release\b|weak\b))",
+        rf"(?:{COALITION_ATL_TOKEN})+.*?(?:(?<![A-Za-z0-9_])[RW](?![A-Za-z0-9_])|(?i:release\b|weak\b))",
         formula,
     ):
         return (
@@ -110,7 +112,7 @@ def validate_release_weak_rejected(
             f"{logic_name} does not support Release (R) or Weak Until (W) operators",
         )
     if re.search(
-        r"<\{[\d,]+\},\s*\d+>.*?(?:(?<![A-Za-z0-9_])[RW](?![A-Za-z0-9_])|(?i:release\b|weak\b))",
+        rf"{NATATL_COALITION_TOKEN}.*?(?:(?<![A-Za-z0-9_])[RW](?![A-Za-z0-9_])|(?i:release\b|weak\b))",
         formula,
     ):
         return (

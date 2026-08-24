@@ -28,8 +28,9 @@ from ..parser_utils import (
 )
 from ..shared_parser import BaseLogicParser
 
+_OL_MODAL_OPS = r"F|G|X|U|R|W|UNTIL|RELEASE|WEAK|NEXT|EVENTUALLY|GLOBALLY"
 _OL_DEMONIC_OPERATOR_PATTERN = re.compile(
-    r"^<J[1-9]\d*>(F|G|X|U|R|W|UNTIL|RELEASE|WEAK|NEXT|EVENTUALLY|GLOBALLY)$",
+    rf"^{OL_DEMONIC_TOKEN}({_OL_MODAL_OPS})$",
     re.IGNORECASE,
 )
 _OL_VALID_OPERATORS = (

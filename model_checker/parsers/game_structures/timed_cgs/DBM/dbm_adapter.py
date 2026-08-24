@@ -1,5 +1,4 @@
-import re
-
+from ..constraint_syntax import BOUND_RE, MAX_CONSTRAINT_RE, RESET_RE
 from ..timed_cgs import TimedCGS
 from .DBM import DBM
 
@@ -9,9 +8,6 @@ FormulaInput = str | tuple[str, ...]
 _AND_OPS = frozenset({"&", "and"})
 _OR_OPS = frozenset({"|", "or"})
 _COMBINATORS = _AND_OPS | _OR_OPS
-_BOUND_RE = re.compile(r"(\w+)(>=|<=|==|>|<)(\d+)")
-_RESET_RE = re.compile(r"(\w+)=(\d+)")
-_MAX_CONSTRAINT_RE = re.compile(r"(\w+)\s*(?:==|>=|<=|>|<)\s*(\d+)")
 
 
 def apply_bounds(dbm: DBM, bounds) -> None:
@@ -186,8 +182,8 @@ def parse_constraints(constraints: list[str], clocks_dict):
     bounds = []
     resets = []
     for constraint in filter(None, constraints):
-        m_bound = _BOUND_RE.match(constraint)
-        m_reset = _RESET_RE.match(constraint)
+        m_bound = BOUND_RE.match(constraint)
+        m_reset = RESET_RE.match(constraint)
         if m_bound:
             clock, op, bound = m_bound.groups()
             if clock not in clocks_dict:
@@ -228,7 +224,7 @@ def get_max_clock_constraints(tcgs: TimedCGS) -> list[int]:
     for constraint_str in (
         cell for row in tcgs.clock_constraint_struct for cell in row if cell
     ):
-        for match in _MAX_CONSTRAINT_RE.finditer(constraint_str):
+        for match in MAX_CONSTRAINT_RE.finditer(constraint_str):
             clock, value_str = match.groups()
             if clock in clocks_dict:
                 idx = clocks_dict[clock]

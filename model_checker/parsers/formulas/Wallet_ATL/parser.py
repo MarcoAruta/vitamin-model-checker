@@ -9,8 +9,15 @@ from model_checker.parsers.formulas.parser_utils import (
     validate_proposition_identifier,
 )
 from model_checker.parsers.formulas.shared_parser import BaseLogicParser
+from model_checker.parsers.syntax_patterns import (
+    COMPARISON_OPERATORS,
+    WALLET_COALITION_HEADER_RE,
+    WALLET_COALITION_TOKEN,
+    WALLET_CONSTRAINT_AND_RE,
+    WALLET_CONSTRAINT_RE,
+)
 
-_WALLET_CONSTRAINT_OPS = frozenset({">=", "<=", "==", ">", "<"})
+_WALLET_CONSTRAINT_OPS = frozenset(COMPARISON_OPERATORS)
 _COALITION_TEMPORAL_SPACING = re.compile(r">>(?=[FGXU])")
 
 _WALLET_ATL_VALID_OPERATORS = frozenset(
@@ -103,7 +110,7 @@ def _validate_wallet_dict_ast(node, valid_operators) -> bool:
 
 def _parse_coalition_logic(text):
     """Parse coalition specification with optional wallet constraints."""
-    coalition_match = re.match(r"<<\s*([^:>]*)(?::(.*))?>>", text)
+    coalition_match = WALLET_COALITION_HEADER_RE.match(text)
     if not coalition_match:
         raise SyntaxError("Invalid coalition specification")
 
@@ -114,17 +121,14 @@ def _parse_coalition_logic(text):
     constraints_part = coalition_match.group(2)
 
     if constraints_part:
-        for constraint in re.split(r"\s*&&\s*", constraints_part.strip()):
-            wallet_match = re.match(
-                r"wallet\(\s*(\d+)\s*,\s*(>=|<=|==|>|<)\s*(\d+)\s*\)",
-                constraint.strip(),
-            )
+        for constraint in WALLET_CONSTRAINT_AND_RE.split(constraints_part.strip()):
+            wallet_match = WALLET_CONSTRAINT_RE.match(constraint.strip())
             if wallet_match:
                 constraints.append(
                     {
-                        "agent": int(wallet_match.group(1)),
-                        "operator": wallet_match.group(2),
-                        "value": int(wallet_match.group(3)),
+                        "agent": int(wallet_match.group("agent")),
+                        "operator": wallet_match.group("operator"),
+                        "value": int(wallet_match.group("value")),
                     }
                 )
             elif constraint.strip():
@@ -159,9 +163,10 @@ class Wallet_ATLParser(BaseLogicParser):
         return t
 
     def t_COALITION(self, t):
-        r"<<\s*\d+(?:\s*,\s*\d+)*\s*(?::\s*wallet\(\s*\d+\s*,\s*(?:>=|<=|==|>|<)\s*\d+\s*\)(?:\s*&&\s*wallet\(\s*\d+\s*,\s*(?:>=|<=|==|>|<)\s*\d+\s*\))*)?\s*>>"
         t.value = _parse_coalition_logic(t.value)
         return t
+
+    t_COALITION.__doc__ = WALLET_COALITION_TOKEN
 
     # --- Grammar Rules (Overrides) ---
     def p_expression_not(self, p):

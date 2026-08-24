@@ -4,13 +4,14 @@ These clocks are not part of the automaton declaration; they are added to the
 timedCGS before the zone graph is built so freeze quantification can be evaluated.
 """
 
-import re
-
-_CLOCK_BOUND_RE = re.compile(r"^([a-zA-Z][a-zA-Z0-9_]*)(?:<=|>=|<|>)")
+from model_checker.parsers.game_structures.timed_cgs.constraint_syntax import (
+    BOUND_CONSTANT_RE,
+    CLOCK_BOUND_PREFIX_RE,
+)
 
 
 def _clock_from_constraint(text: str) -> str | None:
-    match = _CLOCK_BOUND_RE.match(str(text))
+    match = CLOCK_BOUND_PREFIX_RE.match(str(text))
     return match.group(1) if match else None
 
 
@@ -31,9 +32,6 @@ def collect_formula_clocks(node, model_clocks: set[str]) -> tuple[str, ...]:
     return tuple(sorted(found))
 
 
-_BOUND_CONSTANT_RE = re.compile(r"([a-zA-Z][a-zA-Z0-9_]*)\s*(?:<=|>=|<|>|==)\s*(\d+)")
-
-
 def max_constants_from_formula(node, clocks_dict: dict[str, int]) -> list[int]:
     """Largest constant per clock used in formula guards.
 
@@ -50,7 +48,7 @@ def max_constants_from_formula(node, clocks_dict: dict[str, int]) -> list[int]:
 def _record_constraint_maxima(
     text: str, clocks_dict: dict[str, int], maxima: list[int]
 ) -> None:
-    for clock, value_str in _BOUND_CONSTANT_RE.findall(str(text)):
+    for clock, value_str in BOUND_CONSTANT_RE.findall(str(text)):
         if clock in clocks_dict:
             idx = clocks_dict[clock]
             maxima[idx] = max(maxima[idx], int(value_str))

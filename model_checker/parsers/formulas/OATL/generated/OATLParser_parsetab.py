@@ -460,7 +460,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        79,
+        91,
     ),
     (
         "expression -> COALITION_DEMONIC GLOBALLY expression",
@@ -468,7 +468,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        86,
+        98,
     ),
     (
         "expression -> COALITION_DEMONIC NEXT expression",
@@ -476,7 +476,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        87,
+        99,
     ),
     (
         "expression -> COALITION_DEMONIC EVENTUALLY expression",
@@ -484,7 +484,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        88,
+        100,
     ),
     (
         "expression -> expression AND expression",

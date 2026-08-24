@@ -584,7 +584,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        99,
+        100,
     ),
     (
         "expression -> DEMONIC expression WEAK expression",
@@ -592,7 +592,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        100,
+        101,
     ),
     (
         "expression -> DEMONIC expression RELEASE expression",
@@ -600,7 +600,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        101,
+        102,
     ),
     (
         "expression -> DEMONIC GLOBALLY expression",
@@ -608,7 +608,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        107,
+        108,
     ),
     (
         "expression -> DEMONIC NEXT expression",
@@ -616,7 +616,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        108,
+        109,
     ),
     (
         "expression -> DEMONIC EVENTUALLY expression",
@@ -624,7 +624,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        109,
+        110,
     ),
     (
         "expression -> expression AND expression",

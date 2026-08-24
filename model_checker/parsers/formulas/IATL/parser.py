@@ -16,14 +16,19 @@ from model_checker.parsers.formulas.parser_utils import (
     validate_coalition,
 )
 from model_checker.parsers.formulas.shared_parser import BaseLogicParser
-from model_checker.parsers.syntax_patterns import ICTL_PROPOSITION_TOKEN
+from model_checker.parsers.syntax_patterns import (
+    COALITION_ATL_TOKEN,
+    COALITION_UNIVERSAL_TOKEN,
+    ICTL_PROPOSITION_TOKEN,
+)
 
+_IATL_MODAL_OPS = r"U|G|X|F|R|UNTIL|GLOBALLY|NEXT|EVENTUALLY|RELEASE"
 _COALITION_EXIST_PATTERN = re.compile(
-    r"^<\d+(?:,\d+)*>(U|G|X|F|R|UNTIL|GLOBALLY|NEXT|EVENTUALLY|RELEASE)$",
+    rf"^{COALITION_ATL_TOKEN}({_IATL_MODAL_OPS})$",
     re.IGNORECASE,
 )
 _COALITION_UNIVERSAL_PATTERN = re.compile(
-    r"^\[\d+(?:,\d+)*\](U|G|X|F|R|UNTIL|GLOBALLY|NEXT|EVENTUALLY|RELEASE)$",
+    rf"^{COALITION_UNIVERSAL_TOKEN}({_IATL_MODAL_OPS})$",
     re.IGNORECASE,
 )
 
@@ -74,8 +79,8 @@ class IATLParser(BaseLogicParser):
         t.value = "R"
         return t
 
-    t_COALITION = r"<\d+(?:,\d+)*>"
-    t_COALITION_UNIVERSAL = r"\[\d+(?:,\d+)*\]"
+    t_COALITION = COALITION_ATL_TOKEN
+    t_COALITION_UNIVERSAL = COALITION_UNIVERSAL_TOKEN
     t_PROP = ICTL_PROPOSITION_TOKEN
 
     def p_expression_ternary(self, p):

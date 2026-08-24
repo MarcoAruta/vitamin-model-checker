@@ -16,6 +16,12 @@ Returns:
 
 import re
 
+from model_checker.parsers.syntax_patterns import (
+    AGENT_LIST,
+    OATL_COALITION_DEMONIC_TOKEN,
+    POSITIVE_INT,
+)
+
 from ..parser_utils import (
     BOOLEAN_AST_OPERATORS,
     PROPOSITION_TOKEN_PATTERN,
@@ -26,8 +32,9 @@ from ..parser_utils import (
 )
 from ..shared_parser import BaseLogicParser
 
+_OATL_MODAL_OPS = r"F|G|X|U|UNTIL|NEXT|EVENTUALLY|GLOBALLY"
 _OATL_COALITION_OPERATOR_PATTERN = re.compile(
-    r"^<\d+(?:,\d+)*><[1-9]\d*>(F|G|X|U|UNTIL|NEXT|EVENTUALLY|GLOBALLY)$",
+    rf"^{OATL_COALITION_DEMONIC_TOKEN}({_OATL_MODAL_OPS})$",
     re.IGNORECASE,
 )
 _OATL_VALID_OPERATORS = (
@@ -45,6 +52,11 @@ _OATL_VALID_OPERATORS = (
     )
     | BOOLEAN_AST_OPERATORS
 )
+_MISSING_BOUND_TEMPORAL_RE = re.compile(rf"<{AGENT_LIST}>\s*[FGXURW]")
+_COALITION_BOUND_PROBE_RE = re.compile(
+    rf"<{AGENT_LIST}><(?P<bound>\d+)>\s*(?P<op>[FGXURW])"
+)
+_OATL_BOUND_PRESENT_RE = re.compile(OATL_COALITION_DEMONIC_TOKEN)
 
 
 class OATLParser(BaseLogicParser):
@@ -72,13 +84,13 @@ class OATLParser(BaseLogicParser):
 
     # === Tokens ===
     t_PROP = PROPOSITION_TOKEN_PATTERN
-    t_COALITION_DEMONIC = r"<\d+(?:,\d+)*><[1-9]\d*>"
+    t_COALITION_DEMONIC = OATL_COALITION_DEMONIC_TOKEN
 
     # === Grammar ===
     def p_expression_ternary(self, p):
         """expression : COALITION_DEMONIC expression UNTIL expression"""
         validate_coalition_bound_token(
-            p[1], self.max_coalition, bound_pattern=r"[1-9]\d*"
+            p[1], self.max_coalition, bound_pattern=POSITIVE_INT
         )
         p[0] = (p[1] + p[3], p[2], p[4])
 
@@ -87,7 +99,7 @@ class OATLParser(BaseLogicParser):
         | COALITION_DEMONIC NEXT expression
         | COALITION_DEMONIC EVENTUALLY expression"""
         validate_coalition_bound_token(
-            p[1], self.max_coalition, bound_pattern=r"[1-9]\d*"
+            p[1], self.max_coalition, bound_pattern=POSITIVE_INT
         )
         p[0] = (p[1] + p[2], p[3])
 
@@ -97,9 +109,7 @@ class OATLParser(BaseLogicParser):
         return super().parse(formula, **kwargs)
 
     def _coalition_bound_pre_validation(self, formula) -> tuple[bool, str | None]:
-        coalition_temporal_match = re.search(
-            r"<\d+(?:,\d+)*><(?P<bound>\d+)>\s*(?P<op>[FGXURW])", formula
-        )
+        coalition_temporal_match = _COALITION_BOUND_PROBE_RE.search(formula)
         if coalition_temporal_match:
             bound_raw = coalition_temporal_match.group("bound")
             if int(bound_raw) == 0:
@@ -113,9 +123,9 @@ class OATLParser(BaseLogicParser):
                     "Bound cannot have leading zeros (e.g., use <1><5>, not <1><05>)",
                 )
 
-        if re.search(r"<\d+(?:,\d+)*>\s*[FGXURW]", formula) and not re.search(
-            r"<\d+(?:,\d+)*><[1-9]\d*>", formula
-        ):
+        if _MISSING_BOUND_TEMPORAL_RE.search(
+            formula
+        ) and not _OATL_BOUND_PRESENT_RE.search(formula):
             return (
                 False,
                 "Temporal operators require a bound in the form <coalition><k> with k>=1 (e.g., <1><5>F p)",

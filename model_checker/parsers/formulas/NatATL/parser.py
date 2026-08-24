@@ -19,6 +19,7 @@ Behavior:
 import re
 
 from model_checker.parsers.syntax_patterns import (
+    EMPTY_COALITION_RE,
     NATATL_COALITION_TOKEN,
     PROPOSITION_TOKEN,
 )
@@ -51,8 +52,9 @@ _NATATL_VALID_OPERATORS = {
     "EVENTUALLY",
 }
 
+_NATATL_MODAL_OPS = r"U|G|X|F|UNTIL|GLOBALLY|NEXT|EVENTUALLY"
 _NATATL_COALITION_OPERATOR_PATTERN = re.compile(
-    r"^<\{[\d,]+\},\s*\d+>(?:U|G|X|F|UNTIL|GLOBALLY|NEXT|EVENTUALLY)$",
+    rf"^{NATATL_COALITION_TOKEN}(?:{_NATATL_MODAL_OPS})$",
     re.IGNORECASE,
 )
 
@@ -115,7 +117,7 @@ class NatATLParser(BaseLogicParser):
             return False, err
 
         # Reject invalid coalition syntax before parsing
-        if re.search(r"<\s*>", formula):
+        if EMPTY_COALITION_RE.search(formula):
             return False, "Empty coalition '<>' is not allowed"
         if re.search(r"<\s*\d+\s*,\s*>", formula):
             return False, "Trailing comma in coalition is not allowed"

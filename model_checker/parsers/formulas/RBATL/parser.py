@@ -16,6 +16,8 @@ Returns:
 
 import re
 
+from model_checker.parsers.syntax_patterns import AGENT_LIST, COALITION_BOUND_TOKEN
+
 from ..parser_utils import (
     BOOLEAN_AST_OPERATORS,
     PROPOSITION_TOKEN_PATTERN,
@@ -26,8 +28,9 @@ from ..parser_utils import (
 )
 from ..shared_parser import BaseLogicParser
 
+_RBATL_MODAL_OPS = r"F|G|X|U|UNTIL|NEXT|EVENTUALLY|GLOBALLY"
 _RBATL_COALITION_OPERATOR_PATTERN = re.compile(
-    r"^<\d+(?:,\d+)*><\d+(?:,\d+)*>(F|G|X|U|UNTIL|NEXT|EVENTUALLY|GLOBALLY)$",
+    rf"^{COALITION_BOUND_TOKEN}({_RBATL_MODAL_OPS})$",
     re.IGNORECASE,
 )
 _RBATL_VALID_OPERATORS = (
@@ -35,6 +38,8 @@ _RBATL_VALID_OPERATORS = (
     | BOOLEAN_AST_OPERATORS
 )
 _DEFAULT_BOUND_LIMIT = 1_000_000
+_MISSING_BOUND_TEMPORAL_RE = re.compile(rf"<{AGENT_LIST}>\s*[FGXURW]")
+_RBATL_BOUND_PRESENT_RE = re.compile(COALITION_BOUND_TOKEN)
 
 
 class RBATLParser(BaseLogicParser):
@@ -62,7 +67,7 @@ class RBATLParser(BaseLogicParser):
         self.build()
 
     t_PROP = PROPOSITION_TOKEN_PATTERN
-    t_COALITION_BOUND = r"<\d+(?:,\d+)*><\d+(?:,\d+)*>"
+    t_COALITION_BOUND = COALITION_BOUND_TOKEN
 
     # === Grammar ===
     def p_expression_ternary(self, p):
@@ -103,9 +108,9 @@ class RBATLParser(BaseLogicParser):
         if not valid:
             return False, err
 
-        if re.search(r"<\d+(?:,\d+)*>\s*[FGXURW]", formula) and not re.search(
-            r"<\d+(?:,\d+)*><\d+(?:,\d+)*>", formula
-        ):
+        if _MISSING_BOUND_TEMPORAL_RE.search(
+            formula
+        ) and not _RBATL_BOUND_PRESENT_RE.search(formula):
             return (
                 False,
                 "RBATL requires a resource bound (e.g., <1><5>) for temporal operators",

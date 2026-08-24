@@ -31,8 +31,7 @@ from model_checker.parsers.formulas.parser_utils import (
     validate_coalition,
 )
 from model_checker.parsers.formulas.shared_parser import BaseLogicParser
-
-_COALITION_REGEX = r"<\{((?:\d+,)*\d+)\}>"
+from model_checker.parsers.syntax_patterns import AGENT_LIST, CAPATL_COALITION_TOKEN
 
 _CAPATL_VALID_OPERATORS = frozenset(
     {
@@ -57,13 +56,14 @@ _CAPATL_VALID_OPERATORS = frozenset(
     }
 )
 
+_CAPATL_MODAL_OPS = r"U|R|X|F|G|UNTIL|RELEASE|NEXT|EVENTUALLY|GLOBALLY"
 _COALITION_OPERATOR_PATTERN = re.compile(
-    r"^<\{[\d,]+\}>(U|R|X|F|G|UNTIL|RELEASE|NEXT|EVENTUALLY|GLOBALLY)$",
+    rf"^{CAPATL_COALITION_TOKEN}({_CAPATL_MODAL_OPS})$",
     re.IGNORECASE,
 )
 
 _KCAP_PATTERN = re.compile(r"^K\d+$", re.IGNORECASE)
-_LEGACY_BOUND_PATTERN = re.compile(r"<\{[\d,]+\},\s*-?\d+>")
+_LEGACY_BOUND_PATTERN = re.compile(rf"<{{{AGENT_LIST}}},\s*-?\d+>")
 
 
 class CapATLParser(BaseLogicParser):
@@ -109,12 +109,12 @@ class CapATLParser(BaseLogicParser):
         return t
 
     def t_COALITION(self, t):
-        match = re.match(_COALITION_REGEX, t.value)
+        match = re.match(CAPATL_COALITION_TOKEN, t.value)
         if match:
             t.value = match.group(1)
         return t
 
-    t_COALITION.__doc__ = _COALITION_REGEX
+    t_COALITION.__doc__ = CAPATL_COALITION_TOKEN
 
     t_AGENT = r"\d+"
     t_PROP = PROPOSITION_TOKEN_PATTERN

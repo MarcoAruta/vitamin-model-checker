@@ -940,7 +940,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        82,
+        87,
     ),
     (
         "expression -> COALITION expression RELEASE expression",
@@ -948,7 +948,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        83,
+        88,
     ),
     (
         "expression -> COALITION_UNIVERSAL expression UNTIL expression",
@@ -956,7 +956,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        84,
+        89,
     ),
     (
         "expression -> COALITION_UNIVERSAL expression RELEASE expression",
@@ -964,7 +964,7 @@ _lr_productions = [
         4,
         "p_expression_ternary",
         "parser.py",
-        85,
+        90,
     ),
     (
         "expression -> COALITION LPAREN expression UNTIL expression RPAREN",
@@ -972,7 +972,7 @@ _lr_productions = [
         6,
         "p_expression_ternary",
         "parser.py",
-        86,
+        91,
     ),
     (
         "expression -> COALITION LPAREN expression RELEASE expression RPAREN",
@@ -980,7 +980,7 @@ _lr_productions = [
         6,
         "p_expression_ternary",
         "parser.py",
-        87,
+        92,
     ),
     (
         "expression -> COALITION_UNIVERSAL LPAREN expression UNTIL expression RPAREN",
@@ -988,7 +988,7 @@ _lr_productions = [
         6,
         "p_expression_ternary",
         "parser.py",
-        88,
+        93,
     ),
     (
         "expression -> COALITION_UNIVERSAL LPAREN expression RELEASE expression RPAREN",
@@ -996,7 +996,7 @@ _lr_productions = [
         6,
         "p_expression_ternary",
         "parser.py",
-        89,
+        94,
     ),
     (
         "expression -> COALITION GLOBALLY expression",
@@ -1004,7 +1004,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        101,
+        106,
     ),
     (
         "expression -> COALITION NEXT expression",
@@ -1012,7 +1012,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        102,
+        107,
     ),
     (
         "expression -> COALITION EVENTUALLY expression",
@@ -1020,7 +1020,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        103,
+        108,
     ),
     (
         "expression -> COALITION_UNIVERSAL GLOBALLY expression",
@@ -1028,7 +1028,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        104,
+        109,
     ),
     (
         "expression -> COALITION_UNIVERSAL NEXT expression",
@@ -1036,7 +1036,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        105,
+        110,
     ),
     (
         "expression -> COALITION_UNIVERSAL EVENTUALLY expression",
@@ -1044,7 +1044,7 @@ _lr_productions = [
         3,
         "p_expression_unary",
         "parser.py",
-        106,
+        111,
     ),
     (
         "expression -> expression AND expression",

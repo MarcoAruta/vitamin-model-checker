@@ -15,6 +15,11 @@ Returns:
 
 import re
 
+from model_checker.parsers.syntax_patterns import (
+    OATL_COALITION_DEMONIC_TOKEN,
+    POSITIVE_INT,
+)
+
 from ..OATL.parser import OATLParser
 from ..parser_utils import (
     BOOLEAN_AST_OPERATORS,
@@ -25,8 +30,9 @@ from ..parser_utils import (
 )
 from ..shared_parser import BaseLogicParser
 
+_COTL_MODAL_OPS = r"F|G|X|U|R|W|UNTIL|RELEASE|WEAK|NEXT|EVENTUALLY|GLOBALLY"
 _COTL_COALITION_OPERATOR_PATTERN = re.compile(
-    r"^<\d+(?:,\d+)*><[1-9]\d*>(F|G|X|U|R|W|UNTIL|RELEASE|WEAK|NEXT|EVENTUALLY|GLOBALLY)$",
+    rf"^{OATL_COALITION_DEMONIC_TOKEN}({_COTL_MODAL_OPS})$",
     re.IGNORECASE,
 )
 _COTL_VALID_OPERATORS = (
@@ -72,7 +78,7 @@ class COTLParser(OATLParser):
         self.build()
 
     t_PROP = PROPOSITION_TOKEN_PATTERN
-    t_COALITION_DEMONIC = r"<\d+(?:,\d+)*><[1-9]\d*>"
+    t_COALITION_DEMONIC = OATL_COALITION_DEMONIC_TOKEN
 
     def t_RELEASE(self, t):
         r"R(?![a-zA-Z0-9_])|release\b"
@@ -89,7 +95,7 @@ class COTLParser(OATLParser):
         | COALITION_DEMONIC expression WEAK expression
         | COALITION_DEMONIC expression RELEASE expression"""
         validate_coalition_bound_token(
-            p[1], self.max_coalition, bound_pattern=r"[1-9]\d*"
+            p[1], self.max_coalition, bound_pattern=POSITIVE_INT
         )
         p[0] = (p[1] + p[3], p[2], p[4])
 

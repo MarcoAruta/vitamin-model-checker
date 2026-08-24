@@ -496,7 +496,7 @@ _lr_productions = [
         2,
         "p_expression_not",
         "parser.py",
-        168,
+        173,
     ),
     (
         "expression -> expression AND expression",
@@ -504,7 +504,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "parser.py",
-        176,
+        181,
     ),
     (
         "expression -> expression OR expression",
@@ -512,7 +512,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "parser.py",
-        177,
+        182,
     ),
     (
         "expression -> expression IMPLIES expression",
@@ -520,7 +520,7 @@ _lr_productions = [
         3,
         "p_expression_binary",
         "parser.py",
-        178,
+        183,
     ),
     (
         "expression -> COALITION temporal_body",
@@ -528,7 +528,7 @@ _lr_productions = [
         2,
         "p_expression_ternary",
         "parser.py",
-        187,
+        192,
     ),
     (
         "temporal_body -> GLOBALLY expression",
@@ -536,7 +536,7 @@ _lr_productions = [
         2,
         "p_temporal_body",
         "parser.py",
-        210,
+        215,
     ),
     (
         "temporal_body -> NEXT expression",
@@ -544,7 +544,7 @@ _lr_productions = [
         2,
         "p_temporal_body",
         "parser.py",
-        211,
+        216,
     ),
     (
         "temporal_body -> EVENTUALLY expression",
@@ -552,7 +552,7 @@ _lr_productions = [
         2,
         "p_temporal_body",
         "parser.py",
-        212,
+        217,
     ),
     (
         "temporal_body -> expression UNTIL expression",
@@ -560,15 +560,15 @@ _lr_productions = [
         3,
         "p_temporal_body",
         "parser.py",
-        213,
+        218,
     ),
-    ("expression -> PROP", "expression", 1, "p_expression_prop", "parser.py", 229),
+    ("expression -> PROP", "expression", 1, "p_expression_prop", "parser.py", 234),
     (
         "expression -> LPAREN expression RPAREN",
         "expression",
         3,
         "p_expression_group",
         "parser.py",
-        236,
+        241,
     ),
 ]

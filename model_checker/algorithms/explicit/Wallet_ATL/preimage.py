@@ -1,19 +1,16 @@
 """Wallet_ATL pre-image and wallet-constraint helpers."""
 
-import re
 from collections.abc import Iterable, Sequence
 from typing import Any
 
 from model_checker.algorithms.explicit.ATL.preimage import pre
+from model_checker.parsers.syntax_patterns import (
+    WALLET_COALITION_PREFIX_RE,
+    WALLET_CONSTRAINT_AND_RE,
+    WALLET_CONSTRAINT_RE,
+)
 
 WalletConstraint = tuple[int, tuple[str, int]]
-
-_COALITION_PREFIX_RE = re.compile(
-    r"^<<\s*(?P<agents>\d+(?:\s*,\s*\d+)*)\s*(?::\s*(?P<constraints>.*?))?\s*>>"
-)
-_CONSTRAINT_RE = re.compile(
-    r"wallet\(\s*(?P<agent>\d+)\s*,\s*(?P<operator>>=|<=|==|>|<)\s*(?P<value>\d+)\s*\)"
-)
 
 
 def is_wallet_coalition_operator(value: Any) -> bool:
@@ -27,10 +24,12 @@ def _parse_constraints(raw_constraints: str | None) -> list[WalletConstraint]:
         return []
 
     constraints: list[WalletConstraint] = []
-    parts = [part.strip() for part in re.split(r"\s*&&\s*", raw_constraints) if part]
+    parts = [
+        part.strip() for part in WALLET_CONSTRAINT_AND_RE.split(raw_constraints) if part
+    ]
 
     for part in parts:
-        match = _CONSTRAINT_RE.fullmatch(part)
+        match = WALLET_CONSTRAINT_RE.fullmatch(part)
         if not match:
             raise ValueError(f"Invalid wallet constraint '{part}'")
         constraints.append(
@@ -47,7 +46,7 @@ def extract_coalition_and_constraints(
     operator_token: str,
 ) -> tuple[str, list[int], list[WalletConstraint]]:
     """Extract coalition string, coalition agents and wallet constraints from `<<...>>Op`."""
-    match = _COALITION_PREFIX_RE.match(str(operator_token))
+    match = WALLET_COALITION_PREFIX_RE.match(str(operator_token))
     if not match:
         raise ValueError(f"Invalid Wallet_ATL coalition token '{operator_token}'")
 

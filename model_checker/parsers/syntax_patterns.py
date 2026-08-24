@@ -13,7 +13,13 @@ ATOMIC_PROPOSITION_NAME_RE = PROPOSITION_FULL_RE
 # Agent indices inside coalitions.
 AGENT_LIST = r"\d+(?:,\d+)*"
 COALITION_ATL_TOKEN = rf"<{AGENT_LIST}>"
+COALITION_UNIVERSAL_TOKEN = rf"\[{AGENT_LIST}\]"
 EMPTY_COALITION_RE = re.compile(r"<\s*>")
+
+# Comparison operators (clocks, wallets); longest-first so ``>=`` is not ``>``.
+COMPARISON_OPERATORS = (">=", "<=", "==", ">", "<")
+COMPARISON_OPS_ALT = "|".join(COMPARISON_OPERATORS)
+POSITIVE_INT = r"[1-9]\d*"
 
 # ICTL: lowercase atoms or mixed-case with lowercase from the second character
 # (avoids lexing EX, AX, EF, AG, ... as proposition names).
@@ -46,16 +52,38 @@ FORMULA_RESERVED_WORDS = frozenset(
 NATSL_QUANTIFIER_TOKENS = frozenset({"E", "A"})
 
 # NatATL capacity coalitions: <{1,2}, 5>.
-NATATL_CAPACITY_RE = re.compile(rf"<\{{({AGENT_LIST})\}},\s*(\d+)>")
-NATATL_COALITION_TOKEN = r"<\{(?:\d+,)*\d+\},\s*\d+>"
+NATATL_CAPACITY_RE = re.compile(rf"<{{({AGENT_LIST})}},\s*(\d+)>")
+NATATL_COALITION_TOKEN = rf"<{{{AGENT_LIST}}},\s*\d+>"
 
-# OATL / RBATL coalition-bound suffix: <1,2><3>.
+# CapATL paper-style agent set: <{1,2}> (no numeric formula bound).
+CAPATL_COALITION_TOKEN = rf"<{{({AGENT_LIST})}}>"
+
+# OATL / COTL: <1,2><5> with a strictly positive bound.
+OATL_COALITION_DEMONIC_TOKEN = rf"<{AGENT_LIST}><{POSITIVE_INT}>"
+
+# RBATL resource bound: <1,2><3> (bound may be a list; 0 rejected later).
+COALITION_BOUND_TOKEN = rf"<{AGENT_LIST}><{AGENT_LIST}>"
 COALITION_BOUND_INNER_RE = re.compile(rf"<({AGENT_LIST})><({AGENT_LIST})>")
 
 TRAILING_COALITION_COMMA_RE = re.compile(r"<\d+,>")
 NEGATIVE_AGENT_IN_COALITION_RE = re.compile(r"<-\d+>")
 
 # OL demonic cost prefix: <Jk> (e.g. <J5>); k must be a positive integer (no <J0>).
-OL_DEMONIC_TOKEN = r"<J[1-9]\d*>"
-OL_DEMONIC_BOUND_FULL_RE = re.compile(r"^<J([1-9]\d*)>$")
-OL_DEMONIC_BOUND_PREFIX_RE = re.compile(r"^<J([1-9]\d*)>")
+OL_DEMONIC_TOKEN = rf"<J{POSITIVE_INT}>"
+OL_DEMONIC_BOUND_FULL_RE = re.compile(rf"^<J({POSITIVE_INT})>$")
+OL_DEMONIC_BOUND_PREFIX_RE = re.compile(rf"^<J({POSITIVE_INT})>")
+
+# Wallet_ATL: <<1,2:wallet(1, >= 5)>>.
+_WALLET_ATOM = rf"wallet\(\s*\d+\s*,\s*(?:{COMPARISON_OPS_ALT})\s*\d+\s*\)"
+WALLET_COALITION_TOKEN = (
+    rf"<<\s*\d+(?:\s*,\s*\d+)*\s*(?::\s*{_WALLET_ATOM}"
+    rf"(?:\s*&&\s*{_WALLET_ATOM})*)?\s*>>"
+)
+WALLET_COALITION_HEADER_RE = re.compile(r"<<\s*([^:>]*)(?::(.*))?>>")
+WALLET_COALITION_PREFIX_RE = re.compile(
+    r"^<<\s*(?P<agents>\d+(?:\s*,\s*\d+)*)\s*(?::\s*(?P<constraints>.*?))?\s*>>"
+)
+WALLET_CONSTRAINT_AND_RE = re.compile(r"\s*&&\s*")
+WALLET_CONSTRAINT_RE = re.compile(
+    rf"wallet\(\s*(?P<agent>\d+)\s*,\s*(?P<operator>{COMPARISON_OPS_ALT})\s*(?P<value>\d+)\s*\)"
+)

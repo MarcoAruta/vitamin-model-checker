@@ -1,10 +1,14 @@
 """timedCGS file parsing."""
 
-import re
 from typing import Any
 
 from model_checker.parsers.game_structures.cgs import cgs_parser
 from model_checker.parsers.game_structures.cost_cgs import cost_cgs_parser
+from model_checker.parsers.game_structures.timed_cgs.constraint_syntax import (
+    CELL_CONSTRAINT_RE,
+    INVARIANT_RE,
+    NO_CONSTRAINT_TOKENS,
+)
 
 TIMED_SECTION_HEADERS = frozenset(
     {
@@ -70,15 +74,6 @@ def parse_timed_sections(lines: list[str], instance: Any) -> None:
             row_index += 1
 
 
-_CONSTRAINT_RE = re.compile(r"^(\w+)(>=|<=|==|>|<|=)(\d+)$")
-_INVARIANT_RE = re.compile(r"^(\w+)(<=|<)(\d+)$")
-# Tokens that represent "no constraint on this transition cell".
-# A cell containing only one of these tokens is silently skipped.
-# Any other non-empty token that does not match _CONSTRAINT_RE or _INVARIANT_RE
-# raises ValueError immediately; there is no silent drop of constraint fragments.
-_NO_CONSTRAINT_TOKENS = frozenset({"0", "-", "*"})
-
-
 def _parse_clocks(instance: Any, line: str) -> None:
     instance.clocks = line.split()
     instance.clock_constraints_dict = {clock: [] for clock in instance.clocks}
@@ -89,9 +84,9 @@ def _parse_clock_constraints_row(instance: Any, line: str, row: int) -> None:
     for col, token in enumerate(line.split()):
         for part in token.split(","):
             part = part.strip()
-            if not part or part in _NO_CONSTRAINT_TOKENS:
+            if not part or part in NO_CONSTRAINT_TOKENS:
                 continue
-            if not _CONSTRAINT_RE.match(part):
+            if not CELL_CONSTRAINT_RE.match(part):
                 raise ValueError(
                     f"Malformed clock constraint '{part}' at row {row}, column {col}. "
                     "Expected format: <clock><op><integer> (e.g. x>=3, y<2)."
@@ -107,9 +102,9 @@ def _parse_invariants_row(instance: Any, line: str, location: int) -> None:
     for value in line.split():
         for invariant in value.split(","):
             invariant = invariant.strip()
-            if not invariant or invariant in _NO_CONSTRAINT_TOKENS:
+            if not invariant or invariant in NO_CONSTRAINT_TOKENS:
                 continue
-            matched = _INVARIANT_RE.match(invariant)
+            matched = INVARIANT_RE.match(invariant)
             if not matched:
                 raise ValueError(
                     f"Malformed invariant '{invariant}' at location {location}. "
