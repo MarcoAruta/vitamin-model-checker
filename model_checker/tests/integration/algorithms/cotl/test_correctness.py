@@ -29,8 +29,9 @@ class TestCOTLErrorHandling:
 
     def test_invalid_formula_syntax(self, cotl_model_path):
         """Invalid formula yields an error (syntax or in result message)."""
-        result = model_checking("INVALID_FORMULA", str(cotl_model_path))
-        assert "error" in result or "syntax" in result.get("res", "").lower()
+        result = model_checking("<1>F", str(cotl_model_path))
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
 
 
 @pytest.mark.integration

@@ -4,6 +4,9 @@ import logging
 import os
 
 from model_checker.algorithms.explicit.NatATL.NatATLtoCTL import prepare_natatl_formula
+from model_checker.algorithms.explicit.shared.atom_utils import (
+    ensure_formula_atoms_exist,
+)
 from model_checker.parsers.game_structures.cgs import CGS, cgs_actions, cgs_validation
 
 logger = logging.getLogger(__name__)
@@ -40,6 +43,8 @@ def initialize(
     except ValueError as e:
         logger.error("Failed to parse or convert NatATL: %s", e)
         raise ValueError(f"Invalid NatATL formula format: {str(e)}") from e
+
+    ensure_formula_atoms_exist(cgs, CTLformula)
 
     logger.debug("Involved agents: %s", agents)
 

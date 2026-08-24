@@ -15,16 +15,14 @@ class TestNatATLErrorHandling:
     def test_natatl_invalid_formula_syntax(self, natatl_standard_model):
         """Test NatATL with invalid formula syntax."""
         result = model_checking("INVALID_FORMULA", natatl_standard_model.filename)
-        assert "error" in result or "Satisfiability" not in result
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
 
     def test_natatl_nonexistent_atomic_proposition(self, natatl_standard_model):
-        """Test NatATL with non-existent atomic proposition."""
+        """Unknown atoms must not be reported as ordinary unsatisfiability."""
         result = model_checking("<{1}, 1>F nonexistent", natatl_standard_model.filename)
-        assert (
-            "error" in result
-            or result.get("Satisfiability") is False
-            or "does not exist" in str(result).lower()
-        )
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
 
 
 @pytest.mark.integration

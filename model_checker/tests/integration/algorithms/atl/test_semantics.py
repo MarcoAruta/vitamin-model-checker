@@ -30,7 +30,7 @@ class TestATLCoalitionSemantics:
         result = _core_atl_checking(cgs, "<1>X p")
         states = extract_states_from_result(result)
 
-        assert "s0" in states or "s1" in states
+        assert states == {"s0", "s1"}
 
     def test_coalition_eventually_reachable(self, temp_file):
         """Verify <1>F p for eventually reachable proposition."""

@@ -40,7 +40,7 @@ class TestBasicModelCheckingWorkflow:
         assert "error" not in result
         assert "res" in result
         states = extract_states_from_result(result)
-        assert states is not None
+        assert states == {"s0", "s1", "s2", "s3"}
         assert ": True" in result.get("initial_state", "")
 
     def test_ctl_complete_workflow(self, ctl_small_model):
@@ -50,7 +50,7 @@ class TestBasicModelCheckingWorkflow:
 
         assert "error" not in result
         states = extract_states_from_result(result)
-        assert states is not None
+        assert states == {"s0", "s1", "s2", "s3"}
         assert ": True" in result.get("initial_state", "")
 
     def test_additional_logics_complete_workflow(self, test_data_dir):

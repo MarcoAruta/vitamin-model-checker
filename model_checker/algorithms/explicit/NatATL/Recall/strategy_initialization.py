@@ -5,6 +5,9 @@ import os
 from typing import Any
 
 from model_checker.algorithms.explicit.NatATL.NatATLtoCTL import prepare_natatl_formula
+from model_checker.algorithms.explicit.shared.atom_utils import (
+    ensure_formula_atoms_exist,
+)
 from model_checker.models.model_factory import (
     create_model_parser_for_logic,
 )
@@ -62,6 +65,7 @@ def initialize(model_path: str, formula: str, cgs: CGSProtocol | None = None) ->
     CTLformula, agents, k = prepare_natatl_formula(
         formula, model_parser.get_number_of_agents()
     )
+    ensure_formula_atoms_exist(model_parser, CTLformula)
     logger.debug("NatATL formula: %s", formula)
     logger.debug("Converted CTL formula: %s", CTLformula)
     logger.debug("States: %s", model_parser.states)

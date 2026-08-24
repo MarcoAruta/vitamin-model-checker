@@ -17,12 +17,14 @@ class TestRABATLErrorHandling:
     def test_rabatl_invalid_formula_syntax(self, rabatl_model):
         """Test RABATL with invalid formula syntax."""
         result = model_checking("INVALID_FORMULA", rabatl_model.filename)
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
 
     def test_rabatl_nonexistent_atomic_proposition(self, rabatl_model):
         """Test RABATL with non-existent atomic proposition."""
         result = _core_rabatl_checking(rabatl_model, "<1><2>F nonexistent")
-        assert "error" in result or "does not exist" in result.get("res", "").lower()
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
 
     def test_rabatl_invalid_coalition(self, rabatl_model):
         """Test RABATL with invalid coalition (agent number out of range)."""
@@ -32,7 +34,8 @@ class TestRABATLErrorHandling:
     def test_rabatl_missing_dual_coalition(self, rabatl_model):
         """Test RABATL with missing dual coalition."""
         result = _core_rabatl_checking(rabatl_model, "<1>F p")
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
 
 
 @pytest.mark.integration

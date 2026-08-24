@@ -10,7 +10,6 @@ from model_checker.tests.helpers.model_helpers import extract_states_from_result
 from model_checker.tests.helpers.synthetic_models import (
     generate_capcgs_linear_chain_model,
 )
-from model_checker.tests.integration.algorithms import capatl
 
 
 @pytest.mark.unit
@@ -21,12 +20,13 @@ class TestCapATLErrorHandling:
     def test_capatl_invalid_formula_syntax(self, capatl_model):
         """Test CapATL with invalid formula syntax."""
         result = model_checking("INVALID_FORMULA", capatl_model.filename)
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        assert "error" in result
 
     def test_capatl_nonexistent_atomic_proposition(self, capatl_model):
         """Test CapATL with non-existent atomic proposition."""
         result = _core_capatl_checking(capatl_model, "<{1,2}>F nonexistent")
-        assert "error" in result or "does not exist" in result.get("res", "").lower()
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
 
     def test_capatl_invalid_coalition(self, capatl_model):
         """Test CapATL with invalid coalition (agent number out of range)."""
@@ -36,12 +36,12 @@ class TestCapATLErrorHandling:
     def test_capatl_legacy_numeric_bound_rejected(self, capatl_model):
         """NatATL-style <{A}, k> is rejected; CapATL has no formula bound k."""
         result = _core_capatl_checking(capatl_model, "<{1,2},5>F p")
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        assert "error" in result
 
     def test_capatl_empty_coalition_rejected(self, capatl_model):
         """Empty coalition modality is invalid."""
         result = _core_capatl_checking(capatl_model, "<>F p")
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        assert "error" in result
 
 
 @pytest.mark.integration

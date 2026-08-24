@@ -1,33 +1,36 @@
-"""TCTL and TOL parsers accept mixed-case atomic propositions."""
+"""TCTL and TOL parsers: clock ops, booleans, freeze, and quantifier aliases."""
 
 import pytest
 
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
+from model_checker.parsers.formulas.TCTL import (
+    AtomicProp,
+    Binary,
+    BooleanConst,
+    FreezeExpr,
+    QuantifiedPath,
+    SimpleTimeExpr,
+)
+from model_checker.parsers.formulas.TOL import (
+    BooleanConst as TolBooleanConst,
+    FreezeExpr as TolFreezeExpr,
+    SimpleTimeExpr as TolSimpleTimeExpr,
+)
 
 
 @pytest.mark.unit
 def test_tctl_parser_freeze_expression():
     parser = FormulaParserFactory.get_parser_instance("TCTL")
     ast = parser.parse("j.p")
-    assert ast is not None
-    from model_checker.parsers.formulas.TCTL import FreezeExpr
-
     assert isinstance(ast, FreezeExpr)
     assert ast.clock == "j"
 
 
 @pytest.mark.unit
-def test_tctl_parser_parenthesized_until():
-    from model_checker.parsers.formulas.TCTL import (
-        Binary,
-        QuantifiedPath,
-    )
-
+def test_tctl_parser_parenthesized_until_matches_flat():
     parser = FormulaParserFactory.get_parser_instance("TCTL")
     flat = parser.parse("E p U q")
     grouped = parser.parse("E (p U q)")
-    assert flat is not None
-    assert grouped is not None
     assert isinstance(flat, QuantifiedPath)
     assert isinstance(grouped, QuantifiedPath)
     assert flat.quantifier == grouped.quantifier == "E"
@@ -36,80 +39,50 @@ def test_tctl_parser_parenthesized_until():
 
 
 @pytest.mark.unit
+def test_tctl_parser_mixed_case_atom_is_not_a_quantifier():
+    parser = FormulaParserFactory.get_parser_instance("TCTL")
+    ast = parser.parse("Goal")
+    assert isinstance(ast, AtomicProp)
+    assert ast.name == "Goal"
+
+
+@pytest.mark.unit
 @pytest.mark.parametrize(
-    "formula",
+    ("formula", "expected"),
     [
-        "E (p U q)",
-        "A (Goal U safe_1)",
+        ("x>5", "x>5"),
+        ("x>=5", "x>=5"),
+        ("x<5", "x<5"),
+        ("x<=5", "x<=5"),
     ],
 )
-def test_tctl_parser_accepts_parenthesized_until(formula):
+def test_tctl_clock_comparison_is_time_atom_not_implies(formula, expected):
     parser = FormulaParserFactory.get_parser_instance("TCTL")
-    assert parser.parse(formula) is not None
+    ast = parser.parse(formula)
+    assert isinstance(ast, SimpleTimeExpr)
+    assert ast.constraints == expected
 
 
 @pytest.mark.unit
-@pytest.mark.parametrize(
-    "formula",
-    [
-        "Goal",
-        "EF Goal",
-        "AG Goal",
-        "Goal && safe_1",
-        "x<=1",
-    ],
-)
-def test_tctl_parser_accepts_mixed_case_propositions(formula):
+def test_tctl_implication_is_not_a_clock_greater_than():
     parser = FormulaParserFactory.get_parser_instance("TCTL")
-    assert parser.parse(formula) is not None
+    ast = parser.parse("p -> q")
+    assert isinstance(ast, Binary)
+    assert ast.op in {"->", "implies"}
+    assert isinstance(ast.left, AtomicProp)
+    assert isinstance(ast.right, AtomicProp)
 
 
 @pytest.mark.unit
 @pytest.mark.parametrize(
-    "formula",
-    [
-        "Goal",
-        "{J1}F Goal",
-        "{J1}G Goal",
-        "Goal && safe_1",
-        "x<=1",
-        "j.Goal",
-    ],
+    ("formula", "value"),
+    [("true", True), ("false", False)],
 )
-def test_tol_parser_accepts_mixed_case_propositions(formula):
-    parser = FormulaParserFactory.get_parser_instance("TOL")
-    assert parser.parse(formula) is not None
-
-
-@pytest.mark.unit
-def test_tol_parser_freeze_expression():
-    parser = FormulaParserFactory.get_parser_instance("TOL")
-    ast = parser.parse("j.Goal")
-    assert ast is not None
-    from model_checker.parsers.formulas.TOL import FreezeExpr
-
-    assert isinstance(ast, FreezeExpr)
-    assert ast.clock == "j"
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    "formula",
-    ["x>5", "x>=5", "x<5", "x<=5", "true", "false"],
-)
-def test_tctl_parser_clock_comparisons_and_booleans(formula):
+def test_tctl_boolean_constants_are_not_propositions(formula, value):
     parser = FormulaParserFactory.get_parser_instance("TCTL")
-    assert parser.parse(formula) is not None
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize(
-    "formula",
-    ["x>5", "x>=5", "true", "false", "#", "@"],
-)
-def test_tol_parser_clock_comparisons_and_booleans(formula):
-    parser = FormulaParserFactory.get_parser_instance("TOL")
-    assert parser.parse(formula) is not None
+    ast = parser.parse(formula)
+    assert isinstance(ast, BooleanConst)
+    assert ast.value is value
 
 
 @pytest.mark.unit
@@ -124,6 +97,34 @@ def test_tctl_parser_forall_exist_keywords(wordy, compact):
     parser = FormulaParserFactory.get_parser_instance("TCTL")
     wordy_ast = parser.parse(wordy)
     compact_ast = parser.parse(compact)
-    assert wordy_ast is not None
-    assert compact_ast is not None
+    assert isinstance(wordy_ast, QuantifiedPath)
+    assert isinstance(compact_ast, QuantifiedPath)
     assert repr(wordy_ast) == repr(compact_ast)
+
+
+@pytest.mark.unit
+def test_tol_parser_freeze_expression():
+    parser = FormulaParserFactory.get_parser_instance("TOL")
+    ast = parser.parse("j.Goal")
+    assert isinstance(ast, TolFreezeExpr)
+    assert ast.clock == "j"
+
+
+@pytest.mark.unit
+def test_tol_clock_greater_than_is_time_atom():
+    parser = FormulaParserFactory.get_parser_instance("TOL")
+    ast = parser.parse("x>5")
+    assert isinstance(ast, TolSimpleTimeExpr)
+    assert ast.constraints == "x>5"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("formula", "value"),
+    [("true", True), ("false", False), ("@", True), ("#", False)],
+)
+def test_tol_boolean_constants_and_hash_at(formula, value):
+    parser = FormulaParserFactory.get_parser_instance("TOL")
+    ast = parser.parse(formula)
+    assert isinstance(ast, TolBooleanConst)
+    assert ast.value is value

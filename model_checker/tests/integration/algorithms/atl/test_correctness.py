@@ -17,14 +17,14 @@ class TestATLErrorHandling:
     """Test ATL error handling for invalid inputs."""
 
     def test_atl_invalid_formula_syntax(self, cgs_simple_parser):
-        """Test ATL with invalid formula syntax."""
-        result = model_checking("INVALID_FORMULA", cgs_simple_parser.filename)
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        result = _core_atl_checking(cgs_simple_parser, "<1>F")
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
 
     def test_atl_nonexistent_atomic_proposition(self, cgs_simple_parser):
-        """Test ATL with non-existent atomic proposition."""
         result = _core_atl_checking(cgs_simple_parser, "<1>F nonexistent")
-        assert "error" in result or "does not exist" in result.get("res", "").lower()
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
 
 
 @pytest.mark.integration
@@ -33,9 +33,9 @@ class TestATLFErrorHandling:
     """Test ATLF error handling for invalid inputs."""
 
     def test_atlf_invalid_formula_syntax(self, cgs_simple_parser):
-        """Test ATLF with invalid formula syntax."""
-        result = atlf_model_checking("INVALID_FORMULA", cgs_simple_parser.filename)
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        result = atlf_model_checking("<1>F", cgs_simple_parser.filename)
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
 
 
 @pytest.mark.integration

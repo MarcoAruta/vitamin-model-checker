@@ -52,6 +52,18 @@ def resolve_atom_with_constants(
     return resolve_atom(cgs, s)
 
 
+def ensure_formula_atoms_exist(cgs: AtomicModel, ctl_formula: str) -> None:
+    """Raise ValueError if a converted CTL formula uses an unknown atom."""
+    from model_checker.parsers.formula_parser_factory import FormulaParserFactory
+
+    ctl_parser = FormulaParserFactory.get_parser_instance("CTL")
+    ctl_ast = ctl_parser.parse(ctl_formula)
+    if ctl_ast is None:
+        raise ValueError(f"Invalid converted CTL formula: {ctl_formula}")
+    if build_resolved_formula_tree(cgs, ctl_ast, ctl_parser) is None:
+        raise ValueError("Atomic proposition not found in model")
+
+
 def build_resolved_formula_tree(
     cgs: AtomicModel,
     tpl: Any,

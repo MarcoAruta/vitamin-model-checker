@@ -17,25 +17,22 @@ def _initial_state_satisfied(result) -> bool:
 @pytest.mark.unit
 @pytest.mark.model_checking
 @pytest.mark.parametrize(
-    "formula, expect_error",
+    "formula",
     [
-        ("INVALID_FORMULA", True),
-        ("<J1> F nonexistent", True),
-        ("<JF r", True),
-        ("F r", True),
-        ("<2> F r", True),
-        ("<J0> F r", True),
+        "INVALID_FORMULA",
+        "<J1> F nonexistent",
+        "<JF r",
+        "F r",
+        "<2> F r",
+        "<J0> F r",
     ],
 )
-def test_ol_rejects_invalid_input(test_data_dir, formula, expect_error):
+def test_ol_rejects_invalid_input(test_data_dir, formula):
     model_file = (
         test_data_dir / "costCGS" / "OL" / "ol_2agents_medium_6states_costs.txt"
     )
     result = model_checking(formula, str(model_file))
-    if expect_error:
-        assert "error" in result or "Syntax error" in result.get("res", "")
-    else:
-        assert "error" not in result
+    assert "error" in result
 
 
 @pytest.mark.semantic

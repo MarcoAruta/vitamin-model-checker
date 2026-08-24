@@ -53,6 +53,18 @@ class TestTimedCgsParser:
         assert tcgs.clock_constraint_struct[0][0] == "x<=1"
         assert tcgs.invariants_arr[0] == ["x", 2.0]
 
+    def test_comma_separated_guards_and_reset_are_kept(self):
+        instance = type("T", (), {})()
+        instance.clock_constraint_struct = [[""]]
+        timed_cgs_parser._parse_clock_constraints_row(instance, "x>=1,x=0", 0)
+        assert instance.clock_constraint_struct[0][0] == "x>=1,x=0"
+
+    def test_dash_empty_cell_is_skipped_like_zero(self):
+        instance = type("T", (), {})()
+        instance.clock_constraint_struct = [[""]]
+        timed_cgs_parser._parse_clock_constraints_row(instance, "-", 0)
+        assert instance.clock_constraint_struct[0][0] == ""
+
     def test_malformed_clock_constraint_raises(self):
         instance = type("T", (), {})()
         instance.clock_constraint_struct = [[""]]

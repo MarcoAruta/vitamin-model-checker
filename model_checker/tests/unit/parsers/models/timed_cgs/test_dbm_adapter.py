@@ -50,7 +50,14 @@ def test_max_clock_constants(minimal_tcgs):
 
 
 @pytest.mark.unit
-def test_parse_constraints_rejects_unrecognized_token():
+def test_parse_constraints_keeps_two_char_operators():
+    bounds, resets = DBMAdapter.parse_constraints(
+        ["x>=3", "x>1", "x==2", "x=0"], {"x": 0}
+    )
+    ops = [op for _idx, op, _val in bounds]
+    assert ops == [">=", ">", "=="]
+    assert resets == [(1, 0)]
+
     with pytest.raises(ValueError, match="Unrecognized constraint token"):
         DBMAdapter.parse_constraints(["not-a-constraint"], {"x": 0})
 

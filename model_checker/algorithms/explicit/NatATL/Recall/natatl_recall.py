@@ -50,7 +50,10 @@ def _core_natatl_recall_checking(cgs: CGS, formula: str) -> dict[str, Any]:
 
         return result
 
-    except ValueError:
+    except ValueError as e:
+        error_msg = str(e)
+        if "atomic proposition" in error_msg.lower() or "atom" in error_msg.lower():
+            return create_error_response("semantic", error_msg)
         raise
     except Exception as e:
         logger.exception("Unexpected error during NatATL Recall checking")

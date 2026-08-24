@@ -24,7 +24,11 @@ def parser():
     ],
 )
 def test_valid_iatl_formulas(parser, formula):
-    assert parser.parse(formula, n_agent=2) is not None
+    ast = parser.parse(formula, n_agent=2)
+    assert ast is not None
+    if formula.startswith("<") or formula.startswith("["):
+        assert isinstance(ast, tuple)
+        assert ast[0][0] in {"<", "["}
 
 
 @pytest.mark.parametrize(

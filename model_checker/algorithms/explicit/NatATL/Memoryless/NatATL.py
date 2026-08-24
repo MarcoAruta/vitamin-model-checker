@@ -56,6 +56,8 @@ def model_checking(formula: str, model_path: str) -> dict[str, Any]:
         # ValueError might also indicate syntax issues in formula parsing
         if "formula" in error_msg.lower() or "parsing" in error_msg.lower():
             return create_error_response("syntax", error_msg)
+        if "atomic proposition" in error_msg.lower() or "atom" in error_msg.lower():
+            return create_error_response("semantic", error_msg)
         return create_error_response("system", error_msg)
     except Exception as e:
         logger.exception("Unexpected error during NatATL verification")

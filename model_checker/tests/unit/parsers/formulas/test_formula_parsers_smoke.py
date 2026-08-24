@@ -76,10 +76,24 @@ def test_formula_parser_valid_and_invalid(
     parser = parser_class()
     kwargs = {} if n_agent is None else {"n_agent": n_agent}
     result_valid = parser.parse(valid_formula, **kwargs)
-    assert result_valid is not None, f"{logic} valid formula should parse"
-    # Tuple ASTs for most logics; TCTL/TOL/Wallet_ATL return typed objects/dicts.
-    if logic not in ("TOL", "TCTL", "Wallet_ATL"):
+    if logic == "Wallet_ATL":
+        assert result_valid["type"] == "coalition_wallet"
+        assert result_valid["formula"]["operator"] in {"F", "EVENTUALLY"}
+    elif logic == "TCTL":
+        from model_checker.parsers.formulas.TCTL import QuantifiedPath
+
+        assert isinstance(result_valid, QuantifiedPath)
+        assert result_valid.quantifier in {"E", "EF", "A", "AF"}
+    elif logic == "TOL":
+        from model_checker.parsers.formulas.TOL import DemonicOp
+
+        assert isinstance(result_valid, DemonicOp)
+    else:
         assert_parse_structure(result_valid, description=logic)
+        blob = str(result_valid)
+        assert any(
+            token in blob for token in ("F", "X", "G", "EF", "AG", "U")
+        ), f"{logic} valid AST {blob!r} missing a temporal operator"
     result_invalid = parser.parse(invalid_formula, **kwargs)
     assert result_invalid is None, f"{logic} invalid formula should not parse"
 
@@ -106,6 +120,10 @@ def test_temporal_keyword_parsed_not_as_prop(logic, formula_with_keyword, n_agen
     parser = parser_class()
     kwargs = {} if n_agent is None else {"n_agent": n_agent}
     result = parser.parse(formula_with_keyword, **kwargs)
-    assert (
-        result is not None
-    ), f"{logic} should parse '{formula_with_keyword}' (until as UNTIL, not PROP)"
+    assert result is not None
+    if logic == "CTL":
+        assert result == ("AU", "p", "q")
+    elif logic == "LTL":
+        assert result == ("U", "p", "q")
+    else:
+        assert result == ("<J1>U", "p", "q")

@@ -27,8 +27,9 @@ class TestOATLErrorHandling:
 
     def test_oatl_invalid_formula_syntax(self, oatl_model):
         """Reject formulas with invalid syntax."""
-        result = model_checking("<1>F p", oatl_model.filename)
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        result = _core_oatl_checking(oatl_model, "<1>F p")
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
 
     def test_oatl_negative_cost_bound(self, oatl_model):
         """Reject formulas with a negative cost bound."""
@@ -38,7 +39,8 @@ class TestOATLErrorHandling:
     def test_oatl_nonexistent_atomic_proposition(self, oatl_model):
         """Error when formula uses an atomic proposition not in the model."""
         result = _core_oatl_checking(oatl_model, "<1><5>F nonexistent")
-        assert "error" in result or "does not exist" in result.get("res", "").lower()
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
 
 
 @pytest.mark.semantic

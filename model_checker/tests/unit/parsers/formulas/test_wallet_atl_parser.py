@@ -3,11 +3,7 @@
 import pytest
 
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
-from model_checker.parsers.formulas.Wallet_ATL.parser import (
-    Wallet_ATLParser,
-    Wallet_ATLParser,
-)
-from model_checker.parsers.formula_parser_factory import FormulaParserFactory
+from model_checker.parsers.formulas.Wallet_ATL.parser import Wallet_ATLParser
 
 
 @pytest.mark.unit
@@ -40,6 +36,23 @@ def test_wallet_atl_parses_coalition_temporal(formula):
 def test_wallet_atl_rejects_bare_temporal_without_coalition(formula):
     parser = FormulaParserFactory.get_parser_instance("Wallet_ATL")
     assert parser.parse(formula, max_coalition=2) is None
+
+
+@pytest.mark.unit
+def test_wallet_atl_parses_until_with_and_without_guards():
+    """Until is a binary coalition formula; guards stay on the coalition node."""
+    parser = FormulaParserFactory.get_parser_instance("Wallet_ATL")
+    ast = parser.parse("<<1>> p U q", max_coalition=1)
+    assert ast is not None
+    assert ast["type"] == "coalition_wallet"
+    assert ast["formula"]["type"] == "binary"
+    assert ast["formula"]["operator"] in {"U", "UNTIL"}
+
+    guarded = parser.parse("<<1:wallet(1, >= 5)>> p U q", max_coalition=1)
+    assert guarded is not None
+    assert guarded["constraints"] == [
+        {"agent": 1, "operator": ">=", "value": 5},
+    ]
 
 
 @pytest.mark.unit

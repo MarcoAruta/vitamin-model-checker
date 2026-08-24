@@ -26,7 +26,8 @@ class TestFormulaParserStress:
         formula = " and ".join([base] * 50)
         kwargs = {"n_agent": 2} if logic_type == "ATL" else {}
         result = parser.parse(formula, **kwargs)
-        assert result is not None
+        assert isinstance(result, tuple)
+        assert len(result) >= 2
 
     @pytest.mark.parametrize("logic_type", ["CTL"])
     def test_deeply_nested_next_and_globally(self, logic_type):
@@ -38,4 +39,5 @@ class TestFormulaParserStress:
             inner = f"EX ({inner})"
         formula = f"EF ({inner})"
         result = parser.parse(formula)
-        assert result is not None
+        assert isinstance(result, tuple)
+        assert result[0] == "EF"
