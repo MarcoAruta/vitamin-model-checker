@@ -6,7 +6,12 @@ from collections.abc import Generator
 
 from model_checker.algorithms.explicit.shared import strategies_base
 from model_checker.parsers.formulas.LTL.ltl_to_ctl import ltl_to_ctl
-from model_checker.parsers.game_structures.cgs import CGS, cgs_actions, cgs_validation
+from model_checker.parsers.game_structures.cgs import (
+    CGS,
+    CGSProtocol,
+    cgs_actions,
+    cgs_validation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -75,16 +80,23 @@ def generate_strategies(
 
 
 def initialize(
-    model_path: str, formula: str, k: int, agents: list[int]
-) -> tuple[dict[str, list[str]], list[list[str]], list[str], str, list[int], CGS, int]:
+    model_path: str,
+    formula: str,
+    k: int,
+    agents: list[int],
+    cgs: CGSProtocol | None = None,
+) -> tuple[
+    dict[str, list[str]], list[list[str]], list[str], str, list[int], CGSProtocol, int
+]:
     """Load the model, convert LTL to CTL, and collect actions and propositions."""
     import os
 
-    cgs = CGS()
     filename = os.path.abspath(model_path)
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"No such file or directory: {filename}")
-    cgs.read_file(filename)
+    if cgs is None:
+        cgs = CGS()
+        cgs.read_file(filename)
     cgs.filename = filename
     logger.debug("Formula: %s", formula)
 

@@ -17,12 +17,14 @@ class TestLTLErrorHandling:
     def test_ltl_invalid_formula_syntax(self, cgs_simple_parser):
         """Test LTL with invalid formula syntax."""
         result = model_checking("F p &", cgs_simple_parser.filename)
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
 
     def test_ltl_nonexistent_atomic_proposition(self, cgs_simple_parser):
         """Test LTL with non-existent atomic proposition."""
         result = model_checking("F nonexistent", cgs_simple_parser.filename)
-        assert "error" in result or "does not exist" in result.get("res", "").lower()
+        assert "error" in result
+        assert result["error"]["type"] == "validation"
 
 
 @pytest.mark.integration

@@ -1,17 +1,16 @@
 """IATL model checking on BCGS models."""
 
 from typing import Any
-from functools import partial
 
 from model_checker.algorithms.explicit.IATL.checker import IATLModelChecker
 from model_checker.algorithms.explicit.IATL.solver import solve_tree
-from model_checker.parsers.game_structures.bcgs.bcgs import BCGS
 from model_checker.algorithms.explicit.shared.result_formatters import (
     format_model_checking_result,
     verify_initial_state,
 )
 from model_checker.engine.execution import create_model_checking_entry
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
+from model_checker.parsers.game_structures.bcgs.bcgs import BCGS
 from model_checker.utils.error_handler import create_error_response
 
 

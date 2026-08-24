@@ -1,19 +1,19 @@
 """ICTL model checking on birelational CGS models."""
 
-from functools import partial
 from typing import Any
 
 from model_checker.algorithms.explicit.ICTL.checker import ICTLModelChecker
 from model_checker.algorithms.explicit.ICTL.solver import solve_tree
-from model_checker.parsers.game_structures.birelational_matrix.birelational_matrix import (
-    BirelationalMatrix,
-)
-from model_checker.engine.execution import create_model_checking_entry
 from model_checker.algorithms.explicit.shared.result_formatters import (
     format_model_checking_result,
     verify_initial_state,
 )
+from model_checker.engine.execution import create_model_checking_entry
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
+from model_checker.parsers.game_structures.birelational_matrix.birelational_matrix import (
+    BirelationalMatrix,
+)
+from model_checker.utils.error_handler import create_error_response
 
 
 def _core_ictl_checking(parser: BirelationalMatrix, formula: str) -> dict[str, Any]:
@@ -24,11 +24,13 @@ def _core_ictl_checking(parser: BirelationalMatrix, formula: str) -> dict[str, A
     parsed = formula_parser.parse(formula)
     if parsed is None:
         err = formula_parser.errors[0] if formula_parser.errors else "Syntax Error"
-        return {"res": err, "initial_state": ""}
+        return create_error_response("syntax", err)
 
     root = checker.build_tree(parsed)
     if root is None:
-        return {"res": "Syntax Error: the atom does not exist", "initial_state": ""}
+        return create_error_response(
+            "semantic", "Syntax Error: the atom does not exist"
+        )
 
     solve_tree(checker, root)
 

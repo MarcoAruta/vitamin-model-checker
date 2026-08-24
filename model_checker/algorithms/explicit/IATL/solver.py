@@ -83,14 +83,19 @@ def _binary_handler(parser_instance: Any, node: "FormulaTreeNode") -> Any | None
     return None
 
 
-def solve_tree(checker: "IATLModelChecker", node: "FormulaTreeNode") -> None:
+def solve_tree(
+    checker: "IATLModelChecker",
+    node: "FormulaTreeNode",
+    parser_instance: Any | None = None,
+) -> None:
     """Evaluate the formula tree bottom-up."""
-    if node.left is not None:
-        solve_tree(checker, node.left)
-    if node.right is not None:
-        solve_tree(checker, node.right)
+    if parser_instance is None:
+        parser_instance = FormulaParserFactory.get_parser_instance("IATL")
 
-    parser_instance = FormulaParserFactory.get_parser_instance("IATL")
+    if node.left is not None:
+        solve_tree(checker, node.left, parser_instance)
+    if node.right is not None:
+        solve_tree(checker, node.right, parser_instance)
 
     if node.right is None:
         if node.left is None:

@@ -1,7 +1,6 @@
 """Model checking execution pipeline: validation, model loading, and dispatch."""
 
 from collections.abc import Callable
-from functools import partial
 from typing import Any, Protocol
 
 from model_checker.models.model_factory import create_model_parser_for_logic

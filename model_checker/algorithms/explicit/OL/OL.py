@@ -1,7 +1,5 @@
 """OL model checking on cost-bounded game structures."""
 
-import logging
-
 from model_checker.algorithms.explicit.OL.solver import solve_tree
 from model_checker.algorithms.explicit.shared import (
     build_resolved_formula_tree,
@@ -11,8 +9,6 @@ from model_checker.algorithms.explicit.shared import (
 from model_checker.engine.execution import create_model_checking_entry
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
 from model_checker.utils.error_handler import create_error_response
-
-logger = logging.getLogger(__name__)
 
 
 def _core_ol_checking(cgs, formula):

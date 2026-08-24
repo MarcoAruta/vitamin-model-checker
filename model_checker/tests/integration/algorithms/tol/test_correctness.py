@@ -50,3 +50,9 @@ class TestCostBoundedSemantics:
         result = model_checking(formula, str(_FIXTURE))
         assert _states_from_result(result) == expected_states
         assert result["initial_state"] == f"Initial state s0: {initial_true}"
+
+
+def test_syntax_error():
+    result = model_checking("{J2}X p (", str(_FIXTURE))
+    assert "error" in result
+    assert result["error"]["type"] == "syntax"

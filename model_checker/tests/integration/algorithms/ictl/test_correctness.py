@@ -239,6 +239,16 @@ class TestVmiEntry:
         assert result["model"] == str(_EXPERIMENT_MODEL)
         assert "raw_result" not in result
 
+    def test_syntax_error_includes_error_key(self):
+        result = model_checking(")))", str(_EXPERIMENT_MODEL))
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
+
+    def test_unknown_atom_includes_error_key(self):
+        result = model_checking("EF missingatom", str(_EXPERIMENT_MODEL))
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
+
 
 class TestValidation:
     def test_fixture_passes_validation(self):

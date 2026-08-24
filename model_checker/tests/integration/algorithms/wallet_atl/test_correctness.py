@@ -4,6 +4,7 @@ import pytest
 
 from model_checker.algorithms.explicit.Wallet_ATL.Wallet_ATL import (
     _core_walletatl_checking,
+    _extract_state_name,
     model_checking,
 )
 from model_checker.tests.helpers.model_helpers import (
@@ -27,11 +28,18 @@ class TestWalletATLErrorHandling:
 
     def test_invalid_formula_syntax(self, wallet_atl_model):
         result = model_checking("INVALID_FORMULA", wallet_atl_model.filename)
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        assert "error" in result
 
     def test_nonexistent_atomic_proposition(self, wallet_atl_model):
         result = _core_walletatl_checking(wallet_atl_model, "<<1>>F missing")
-        assert "error" in result or "does not exist" in result.get("res", "").lower()
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
+
+    def test_extract_state_name_strips_wallet_suffixes_only(self):
+        assert _extract_state_name("s9:10:20") == "s9"
+        assert _extract_state_name("locA:5") == "locA"
+        assert _extract_state_name("s_init") == "s_init"
+        assert _extract_state_name("s0") == "s0"
 
 
 @pytest.mark.integration

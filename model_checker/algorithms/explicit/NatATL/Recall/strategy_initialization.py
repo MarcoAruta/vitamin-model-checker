@@ -46,20 +46,18 @@ def initialize(model_path: str, formula: str, cgs: CGSProtocol | None = None) ->
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"No such file or directory: {filename}")
 
-    if cgs:
+    if cgs is not None:
         model_parser = cgs
-        # Ensure model content is loaded if using a pre-existing parser instance
-        if not hasattr(model_parser, "states") or not model_parser.states:
+        states = getattr(model_parser, "states", None)
+        if states is None or len(states) == 0:
             model_parser.read_file(filename)
-        n = model_parser.get_number_of_agents()
-        cgs_validation.validate_nat_idle_requirements(model_parser.graph, n)
-        cgs_validation.validate_recall_structure(model_parser.graph, n)
     else:
         model_parser = create_model_parser_for_logic(filename, "NatATL")
         model_parser.read_file(filename)
-        n = model_parser.get_number_of_agents()
-        cgs_validation.validate_nat_idle_requirements(model_parser.graph, n)
-        cgs_validation.validate_recall_structure(model_parser.graph, n)
+
+    n = model_parser.get_number_of_agents()
+    cgs_validation.validate_nat_idle_requirements(model_parser.graph, n)
+    cgs_validation.validate_recall_structure(model_parser.graph, n)
 
     CTLformula, agents, k = prepare_natatl_formula(
         formula, model_parser.get_number_of_agents()

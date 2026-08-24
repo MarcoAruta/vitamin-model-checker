@@ -1,6 +1,6 @@
 """CTL model checking on concurrent game structures."""
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from model_checker.algorithms.explicit.CTL.solver import (
     extract_trace_for_result,
@@ -16,7 +16,10 @@ from model_checker.algorithms.explicit.shared import (
 )
 from model_checker.engine.execution import execute_model_checking_with_parser
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
-from model_checker.utils.error_handler import create_error_response
+from model_checker.utils.error_handler import (
+    create_error_response,
+    value_error_to_response,
+)
 from model_checker.utils.literals import parse_state_set_literal
 
 if TYPE_CHECKING:
@@ -25,7 +28,7 @@ if TYPE_CHECKING:
 
 def _parse_and_build_ctl_tree(
     cgs: "CGS", formula: str
-) -> dict[str, Any] | tuple[Any, None]:
+) -> tuple[Any, None] | tuple[None, dict[str, Any]]:
     """Parse the formula and build the tree, or return an error."""
     parser = FormulaParserFactory.get_parser_instance("CTL")
     res_parsing = parser.parse(formula)
@@ -114,7 +117,7 @@ def _core_ctl_checking(
 def model_checking(
     formula: str,
     filename: str,
-    preloaded_model: Optional["CGS"] = None,
+    preloaded_model: "CGS | None" = None,
     generate_trace: bool = False,
 ) -> dict[str, Any]:
     """Entry point for CTL model checking from a file or a pre-loaded model."""
@@ -129,8 +132,8 @@ def model_checking(
             ):
                 preloaded_model.read_file(filename)
             return _core_ctl_checking(preloaded_model, formula, generate_trace)
-        except ValueError:
-            raise
+        except ValueError as exc:
+            return value_error_to_response(str(exc))
         except Exception as e:
             return create_error_response(
                 "system", f"Error during CTL model checking: {str(e)}"

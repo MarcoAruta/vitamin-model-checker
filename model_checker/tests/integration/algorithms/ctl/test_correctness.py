@@ -55,9 +55,10 @@ class TestCTLErrorHandling:
     def test_ctl_invalid_formula_syntax(self, cgs_simple_parser):
         """Invalid formula returns error or syntax message."""
         result = model_checking("INVALID_FORMULA", cgs_simple_parser.filename)
-        assert "error" in result or "Syntax error" in result.get("res", "")
+        assert "error" in result
 
     def test_ctl_nonexistent_atomic_proposition(self, cgs_simple_parser):
         """Nonexistent atom returns error or 'does not exist'."""
         result = _core_ctl_checking(cgs_simple_parser, "EF nonexistent")
-        assert "error" in result or "does not exist" in result.get("res", "").lower()
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"

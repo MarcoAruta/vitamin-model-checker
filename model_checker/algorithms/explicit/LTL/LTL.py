@@ -21,7 +21,10 @@ from model_checker.algorithms.explicit.SolutionConcepts.Solution_Concepts import
     exists_nash,
     is_not_nash,
 )
+from model_checker.models.model_factory import create_model_parser_for_logic
+from model_checker.parsers.formula_parser_factory import FormulaParserFactory
 from model_checker.parsers.game_structures.cgs import CGSProtocol
+from model_checker.utils.error_handler import create_error_response
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +48,6 @@ LTL_KEYWORDS = {
 
 def _validate_ltl_input(formula: str, filename: str | None) -> dict[str, Any] | None:
     """Return an error dict if formula or filename is missing; otherwise None."""
-    from model_checker.utils.error_handler import create_error_response
-
     if not formula or not formula.strip():
         return create_error_response("validation", "Formula not entered")
     if not filename:
@@ -56,11 +57,6 @@ def _validate_ltl_input(formula: str, filename: str | None) -> dict[str, Any] | 
 
 def _parse_ltl_formula(formula: str) -> tuple[Any, dict[str, Any] | None]:
     """Parse LTL formula. Returns (parsed, None) or (None, error_dict)."""
-    from model_checker.parsers.formula_parser_factory import (
-        FormulaParserFactory,
-    )
-    from model_checker.utils.error_handler import create_error_response
-
     parser = FormulaParserFactory.get_parser_instance("LTL")
     parsed = parser.parse(formula)
     if parsed is None:
@@ -71,10 +67,6 @@ def _parse_ltl_formula(formula: str) -> tuple[Any, dict[str, Any] | None]:
 
 def _load_ltl_model(filename: str) -> Any:
     """Load the CGS model from the given file for LTL model checking."""
-    from model_checker.models.model_factory import (
-        create_model_parser_for_logic,
-    )
-
     cgs = create_model_parser_for_logic(filename, "LTL")
     cgs.read_file(filename)
     return cgs
@@ -84,8 +76,6 @@ def _validate_formula_propositions(
     formula: str, atomic_propositions: list[str]
 ) -> dict[str, Any] | None:
     """Return an error dict if the formula uses undeclared propositions; otherwise None."""
-    from model_checker.utils.error_handler import create_error_response
-
     formula_props = set(re.findall(r"\b([a-z]+)\b", formula)) - LTL_KEYWORDS
     invalid = formula_props - set(atomic_propositions)
     if invalid:
@@ -106,7 +96,7 @@ def _run_sure_win_and_format_result(
 ) -> dict[str, Any]:
     """Run sure-win check and return the standard result dict with ``res`` and ``initial_state``."""
     initial_state = cgs.initial_state
-    result = model_checking_sure_win(filename, formula, k, agents)
+    result = model_checking_sure_win(filename, formula, k, agents, cgs=cgs)
     if result.get("Satisfiability"):
         return {
             "res": "Result: {satisfied}",
@@ -119,7 +109,7 @@ def _run_sure_win_and_format_result(
 
 
 def model_checking_sure_win(
-    model: Any, formula: str, k: int, agents: list[int]
+    model: Any, formula: str, k: int, agents: list[int], cgs: CGSProtocol | None = None
 ) -> dict[str, Any]:
     """Search for a sure-win strategy up to complexity k.
 
@@ -135,7 +125,7 @@ def model_checking_sure_win(
         agents,
         cgs,
         _nash_agents,
-    ) = initialize(model, formula, k, agents)
+    ) = initialize(model, formula, k, agents, cgs=cgs)
     i = 1
 
     found_solution_state = [False]
@@ -200,37 +190,36 @@ def model_checking_is_not_nash(
         _agents,
         _filename,
         _nash_agents,
-    ) = initialize(model, formula, k, selected_agents)
+    ) = initialize(model, formula, k, selected_agents, cgs=cgs)
 
     logger.debug("Natural strategies created: %s", natural_strategies)
 
-    if natural_strategies is not None:
-        logger.debug("Using manually provided natural strategies.")
+    if natural_strategies is None:
+        return create_error_response("validation", "Natural strategies not provided")
 
-        if is_not_nash(
-            model,
-            cgs,
-            selected_agents,
-            CTLformula,
-            natural_strategies,
-            k,
-            agent_actions,
-            atomic_propositions,
-        ):
-            logger.info(
-                "Deviation found: the natural strategy is NOT a Nash Equilibrium!"
-            )
-            result["Satisfiability"] = False
-            result["Complexity Bound"] = k
-            return result
-        else:
-            logger.info(
-                "No deviation found: the natural strategy "
-                "appears to be a Nash Equilibrium!"
-            )
-            result["Satisfiability"] = True
-            result["Complexity Bound"] = k
-            return result
+    logger.debug("Using manually provided natural strategies.")
+
+    if is_not_nash(
+        model,
+        cgs,
+        selected_agents,
+        CTLformula,
+        natural_strategies,
+        k,
+        agent_actions,
+        atomic_propositions,
+    ):
+        logger.info("Deviation found: the natural strategy is NOT a Nash Equilibrium!")
+        result["Satisfiability"] = False
+        result["Complexity Bound"] = k
+        return result
+
+    logger.info(
+        "No deviation found: the natural strategy " "appears to be a Nash Equilibrium!"
+    )
+    result["Satisfiability"] = True
+    result["Complexity Bound"] = k
+    return result
 
 
 def model_checking_exists_nash(
@@ -357,8 +346,6 @@ def model_checking_lose_some_nash(
 
 def model_checking(formula: str, filename: str) -> dict[str, Any]:
     """Main entry point for LTL sure-win checking (k=5, all agents)."""
-    from model_checker.utils.error_handler import create_error_response
-
     err = _validate_ltl_input(formula, filename)
     if err is not None:
         return err

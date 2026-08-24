@@ -117,19 +117,25 @@ def _dispatch(
 
 
 def solve_tree_with_trace(
-    cgs: "CGS", node: Any, generate_trace: bool = True
+    cgs: "CGS",
+    node: Any,
+    generate_trace: bool = True,
+    parser: Any | None = None,
+    cached_edges: list | None = None,
 ) -> OperatorWithTrace | None:
     """Evaluate the formula tree bottom-up, optionally recording trace data."""
+    if parser is None:
+        parser = FormulaParserFactory.get_parser_instance("CTL")
+    if cached_edges is None:
+        cached_edges = cgs.get_edges()
+
     if node.left is not None:
-        solve_tree_with_trace(cgs, node.left, generate_trace)
+        solve_tree_with_trace(cgs, node.left, generate_trace, parser, cached_edges)
     if node.right is not None:
-        solve_tree_with_trace(cgs, node.right, generate_trace)
+        solve_tree_with_trace(cgs, node.right, generate_trace, parser, cached_edges)
 
     operator_trace = None
     val = node.value
-
-    cached_edges = cgs.get_edges()
-    parser = FormulaParserFactory.get_parser_instance("CTL")
 
     if node.right is None:
         key = _ctl_unary_key(parser, val)

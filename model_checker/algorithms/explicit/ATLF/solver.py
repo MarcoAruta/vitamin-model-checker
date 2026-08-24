@@ -13,19 +13,20 @@ from model_checker.algorithms.explicit.ATLF.operators import (
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
 
 
-def solve_tree(cgs, node):
+def solve_tree(cgs, node, parser=None):
     """
     Recursively solve the formula tree for ATLF.
 
     The result is the model checking result with real-valued state lists.
     It solves every node depending on the operator.
     """
-    if node.left is not None:
-        solve_tree(cgs, node.left)
-    if node.right is not None:
-        solve_tree(cgs, node.right)
+    if parser is None:
+        parser = FormulaParserFactory.get_parser_instance("ATL")
 
-    parser = FormulaParserFactory.get_parser_instance("ATL")
+    if node.left is not None:
+        solve_tree(cgs, node.left, parser)
+    if node.right is not None:
+        solve_tree(cgs, node.right, parser)
 
     if node.right is None:
         if parser.verify("NOT", node.value):

@@ -68,10 +68,14 @@ def _coalition_binary_key(parser_instance, val):
     return None
 
 
-def solve_tree(cgs, node, cost_filter: CostFilter, logic: str, cache=None) -> None:
+def solve_tree(
+    cgs, node, cost_filter: CostFilter, logic: str, cache=None, parser=None
+) -> None:
     """Recursively evaluate a resource-bounded ATL formula tree bottom-up."""
     if cache is None:
         cache = {}
+    if parser is None:
+        parser = FormulaParserFactory.get_parser_instance(logic)
 
     node_key = (
         str(node.value)
@@ -83,11 +87,10 @@ def solve_tree(cgs, node, cost_filter: CostFilter, logic: str, cache=None) -> No
         return
 
     if node.left:
-        solve_tree(cgs, node.left, cost_filter, logic, cache)
+        solve_tree(cgs, node.left, cost_filter, logic, cache, parser)
     if node.right:
-        solve_tree(cgs, node.right, cost_filter, logic, cache)
+        solve_tree(cgs, node.right, cost_filter, logic, cache, parser)
 
-    parser = FormulaParserFactory.get_parser_instance(logic)
     if node.right is None:
         key = _coalition_unary_key(parser, node.value)
         if key and key in _UNARY:

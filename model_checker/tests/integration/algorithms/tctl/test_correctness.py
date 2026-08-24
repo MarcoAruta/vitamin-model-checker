@@ -125,7 +125,8 @@ def test_tctl_au_differs_from_eu(formula, expected_locations, initial_ok):
 
 def test_syntax_error():
     result = model_checking("EF p (", str(_MINIMAL))
-    assert "error" in result or "Syntax" in result.get("res", "")
+    assert "error" in result
+    assert result["error"]["type"] == "syntax"
 
 
 def test_tctl_zeno_cycle():

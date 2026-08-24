@@ -5,8 +5,6 @@ Coalition modalities `<A><k>` require coalition `A` to enforce the sub-formula
 while each chosen transition has cost at most `k`.
 """
 
-import logging
-
 from model_checker.algorithms.explicit.OATL.solver import solve_tree
 from model_checker.algorithms.explicit.shared import (
     build_resolved_formula_tree,
@@ -21,7 +19,16 @@ from model_checker.engine.execution import create_model_checking_entry
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
 from model_checker.utils.error_handler import create_error_response
 
-logger = logging.getLogger(__name__)
+
+def _reset_oatl_caches(cgs):
+    if not hasattr(cgs, "_oatl_cost_cache"):
+        cgs._oatl_cost_cache = {}
+    else:
+        cgs._oatl_cost_cache.clear()
+    if not hasattr(cgs, "_oatl_base_action_cache"):
+        cgs._oatl_base_action_cache = {}
+    else:
+        cgs._oatl_base_action_cache.clear()
 
 
 def _core_oatl_checking(cgs, formula):
@@ -31,8 +38,7 @@ def _core_oatl_checking(cgs, formula):
             "validation", "OATL requires a costCGS model with action costs"
         )
 
-    cgs._oatl_cost_cache = {}
-    cgs._oatl_base_action_cache = {}
+    _reset_oatl_caches(cgs)
 
     parser = FormulaParserFactory.get_parser_instance("OATL")
     res_parsing = parser.parse(formula, n_agent=cgs.get_number_of_agents())

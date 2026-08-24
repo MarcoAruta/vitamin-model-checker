@@ -33,17 +33,18 @@ def _extract_coalition(val_str):
     return val_str[start : end + 1]
 
 
-def build_tree(cgs: CapCGSProtocol, tpl: Any) -> Node_PK | None:
+def build_tree(cgs: CapCGSProtocol, tpl: Any, parser=None) -> Node_PK | None:
     """Build the CapATL formula tree from a parsed formula tuple."""
-    parser = FormulaParserFactory.get_parser_instance("CapATL")
+    if parser is None:
+        parser = FormulaParserFactory.get_parser_instance("CapATL")
     if isinstance(tpl, tuple):
         root = Node_PK(tpl[0])
         if len(tpl) > 1:
-            root.left = build_tree(cgs, tpl[1])
+            root.left = build_tree(cgs, tpl[1], parser)
             if root.left is None:
                 return None
         if len(tpl) > 2:
-            root.right = build_tree(cgs, tpl[2])
+            root.right = build_tree(cgs, tpl[2], parser)
             if root.right is None:
                 return None
         return root
@@ -74,17 +75,18 @@ def build_tree(cgs: CapCGSProtocol, tpl: Any) -> Node_PK | None:
     return Node_PK(winning_pk)
 
 
-def solve_tree(cgs: CapCGSProtocol, node: Node_PK | None) -> None:
+def solve_tree(cgs: CapCGSProtocol, node: Node_PK | None, parser=None) -> None:
     """Evaluate the CapATL formula tree bottom-up."""
     if node is None:
         return
 
-    if node.left:
-        solve_tree(cgs, node.left)
-    if node.right:
-        solve_tree(cgs, node.right)
+    if parser is None:
+        parser = FormulaParserFactory.get_parser_instance("CapATL")
 
-    parser = FormulaParserFactory.get_parser_instance("CapATL")
+    if node.left:
+        solve_tree(cgs, node.left, parser)
+    if node.right:
+        solve_tree(cgs, node.right, parser)
 
     if node.right is None:
         val_str = str(node.value)

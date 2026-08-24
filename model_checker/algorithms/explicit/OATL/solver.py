@@ -56,14 +56,6 @@ def _oatl_binary_key(parser_instance, val):
     return None
 
 
-def solve_tree(cgs, node, solve_context, cache=None):
-    """
-    Recursively solve the formula tree for OATL.
-    """
-    if cache is None:
-        cache = {}
-
-
 def solve_tree(cgs, node, solve_context):
     """Recursively solve the OATL formula tree."""
     parser = FormulaParserFactory.get_parser_instance("OATL")

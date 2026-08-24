@@ -11,6 +11,7 @@ Uses the same explicit-algorithm structure as ATL:
 import re
 from typing import Any
 
+from model_checker.algorithms.explicit.ATL.ATL import _core_atl_checking
 from model_checker.algorithms.explicit.ATL.preimage import (
     build_transition_cache,
 )
@@ -18,6 +19,9 @@ from model_checker.algorithms.explicit.shared import (
     format_model_checking_result,
     resolve_atom,
     verify_initial_state,
+)
+from model_checker.algorithms.explicit.shared.resource_bounded_to_atl import (
+    wallet_atl_to_atl,
 )
 from model_checker.engine.execution import create_model_checking_entry
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
@@ -152,18 +156,14 @@ def _convert_wallet_ast(node: Any) -> Any:
 
 
 def _extract_state_name(initial_state: str) -> str:
-    """Extract plain state name from wallet-extended state IDs (e.g. s9:10:20)."""
-    match = re.match(r"^(s\d+)", str(initial_state).strip())
-    return match.group(1) if match else str(initial_state).strip()
+    """Strip trailing :balance suffixes from wallet-extended IDs (e.g. locA:10:20)."""
+    text = str(initial_state).strip()
+    match = re.fullmatch(r"(.*?)(?::\d+)+", text)
+    return match.group(1) if match else text
 
 
 def _core_walletatl_checking(cgs, formula: str) -> dict[str, Any]:
     """Core Wallet_ATL model checking logic."""
-    from model_checker.algorithms.explicit.ATL.ATL import _core_atl_checking
-    from model_checker.algorithms.explicit.shared.resource_bounded_to_atl import (
-        wallet_atl_to_atl,
-    )
-
     # 1. Fast path: check unconstrained ATL formula first
     atl_formula = wallet_atl_to_atl(formula)
     atl_result = _core_atl_checking(cgs, atl_formula)

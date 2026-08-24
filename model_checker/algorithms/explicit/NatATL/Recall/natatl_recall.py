@@ -34,7 +34,7 @@ def _core_natatl_recall_checking(cgs: CGS, formula: str) -> dict[str, Any]:
             agents,
             filename,
             model_parser,
-        ) = initialize(cgs.filename, formula)
+        ) = initialize(cgs.filename, formula, cgs=cgs)
 
         # Solve using the solver module
         result = solve_natatl_recall(
