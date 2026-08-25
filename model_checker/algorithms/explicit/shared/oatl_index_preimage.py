@@ -49,7 +49,9 @@ def check_if_action_is_extension(action: str, extension_action: str) -> bool:
 
     if len(action_tokens) != len(extension_tokens):
         return False
-    for coalition_token, extension_token in zip(action_tokens, extension_tokens):
+    for coalition_token, extension_token in zip(
+        action_tokens, extension_tokens, strict=True
+    ):
         if coalition_token != "-" and coalition_token != extension_token:
             return False
     return True

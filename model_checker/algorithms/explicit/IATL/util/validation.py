@@ -1,9 +1,9 @@
 """Validation rules for IATL BCGS models."""
 
 from itertools import combinations
+from typing import Any
 
 import numpy as np
-from typing import Any
 
 from model_checker.algorithms.explicit.IATL.preimage import group_moves_by_coalition
 from model_checker.parsers.game_structures.cgs import cgs_actions
@@ -183,9 +183,6 @@ def _check_model_metadata(model: Any) -> None:
         raise AssertionError("Only boolean preorder matrices are admitted.")
     if not np.all(np.isin(model.matrix_prop, [0, 1])):
         raise AssertionError("Only boolean proposition matrix are admitted.")
-
-
-from typing import Any
 
 
 def check_conditions_hold(model: Any) -> None:

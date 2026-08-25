@@ -33,8 +33,8 @@ class TestCapATLErrorHandling:
         result = _core_capatl_checking(capatl_model, "<{99}>F p")
         assert "error" in result
 
-    def test_capatl_legacy_numeric_bound_rejected(self, capatl_model):
-        """NatATL-style <{A}, k> is rejected; CapATL has no formula bound k."""
+    def test_capatl_formula_bound_rejected(self, capatl_model):
+        """Formula bound <{A}, k> is rejected; CapATL has no numeric k."""
         result = _core_capatl_checking(capatl_model, "<{1,2},5>F p")
         assert "error" in result
 

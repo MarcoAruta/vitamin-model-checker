@@ -13,7 +13,11 @@ from model_checker.parsers.formulas.TCTL import (
 )
 from model_checker.parsers.formulas.TOL import (
     BooleanConst as TolBooleanConst,
+)
+from model_checker.parsers.formulas.TOL import (
     FreezeExpr as TolFreezeExpr,
+)
+from model_checker.parsers.formulas.TOL import (
     SimpleTimeExpr as TolSimpleTimeExpr,
 )
 

@@ -7,18 +7,16 @@ import pytest
 from model_checker.algorithms.explicit.IATL.checker import IATLModelChecker
 from model_checker.algorithms.explicit.IATL.IATL import model_checking
 from model_checker.algorithms.explicit.IATL.solver import solve_tree
+from model_checker.algorithms.explicit.shared.fixpoint_iter import greatest_fixpoint
+from model_checker.parsers.formula_parser_factory import FormulaParserFactory
 from model_checker.parsers.game_structures.bcgs.bcgs import BCGS
+from model_checker.utils.literals import parse_state_set_literal
 
 
 def _load_bcgs(filename):
     model = BCGS()
     model.read_file(filename)
     return model
-
-
-from model_checker.algorithms.explicit.shared.fixpoint_iter import greatest_fixpoint
-from model_checker.parsers.formula_parser_factory import FormulaParserFactory
-from model_checker.utils.literals import parse_state_set_literal
 
 _FIXTURE = (
     Path(__file__).resolve().parents[3]

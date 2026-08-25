@@ -10,7 +10,7 @@ What it handles:
 
 What it rejects:
 - Weak Until (W): CapATL path formulas use X, U and R (G/F are supported sugar).
-- NatATL-style `<{A}, k>` (numeric k is not part of CapATL; capacities live in the model).
+- Formula bound `<{A}, k>` (numeric k is not CapATL; capacities live in the model).
 - Uppercase textual boolean keywords; uppercase is limited to modal letters U/R/X/F/G/K.
 - Non-ASCII characters, invalid special characters, empty/None formulas, null bytes.
 - Empty or malformed coalitions (e.g., `<>`, trailing commas, negative indices, or
@@ -63,7 +63,8 @@ _COALITION_OPERATOR_PATTERN = re.compile(
 )
 
 _KCAP_PATTERN = re.compile(r"^K\d+$", re.IGNORECASE)
-_LEGACY_BOUND_PATTERN = re.compile(rf"<{{{AGENT_LIST}}},\s*-?\d+>")
+# Reject NatATL-looking `<{agents}, k>`; CapATL coalitions have no formula bound.
+_FORMULA_BOUND_PATTERN = re.compile(rf"<{{{AGENT_LIST}}},\s*-?\d+>")
 
 
 class CapATLParser(BaseLogicParser):
@@ -183,7 +184,7 @@ class CapATLParser(BaseLogicParser):
         if not valid:
             return False, err
 
-        if _LEGACY_BOUND_PATTERN.search(formula):
+        if _FORMULA_BOUND_PATTERN.search(formula):
             return (
                 False,
                 "CapATL uses <{coalition}> without a numeric bound "

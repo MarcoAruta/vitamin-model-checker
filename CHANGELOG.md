@@ -4,6 +4,30 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.2] - 2026-08-25
+
+### Added
+
+- Dedicated COTL parser package; CapATL binary Release (greatest fixpoint).
+- Per-logic algorithm docs, architecture/structure docs under docs/.
+- Stronger unit/integration coverage (WalletCGS, timedCGS, bounded ATL, parsers).
+
+### Changed
+- Parser layout standardized across logics; PLY parsetab files renamed per logic.
+- Shared boolean AST allow-lists; Release/Weak Until grammar moved to COTL
+  (dropped from OATL/RBATL surface).
+- Explicit checkers: unified error/loading paths, thread-safe PLY parsing,
+  reused loaded models, fail-closed n_agent defaults.
+
+### Fixed
+- Semantics: CTL ER duality; ATL compact joint actions; CapATL Pre/F;
+  LTL/TCTL/TOL/ICTL/RBATL theory alignment; Wallet_ATL next/feasibility/until;
+  OATL multi-resource costs; NatSL Alternated challenges; NatATL coalition
+  validation.
+- Models: total CGS transitions (no vacuous AX on sinks); CostCGS keys; timedCGS
+  invariants/zones/constraints; model_factory header detection; BCGS factory via
+  CGS.
+
 ## [1.6.0] - 2026-06-24
 
 ### Added

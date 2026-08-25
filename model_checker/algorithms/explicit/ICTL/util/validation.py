@@ -1,5 +1,7 @@
 """Validation rules for ICTL birelational models."""
 
+from typing import Any
+
 import numpy as np
 
 from model_checker.algorithms.explicit.shared.graph_relations import labeled_pairs
@@ -111,9 +113,6 @@ def _check_labeling_respects_preorder(
             greater_row = matrix_prop[state_index[greater_state]]
             if not np.all((state_row == 0) | (greater_row == 1)):
                 raise AssertionError("Labeling function not respected for preorder.")
-
-
-from typing import Any
 
 
 def _check_model_metadata(model: Any) -> None:

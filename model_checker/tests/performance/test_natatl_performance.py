@@ -19,7 +19,6 @@ from model_checker.tests.helpers.model_helpers import (
     load_cgs_from_content,
 )
 
-
 NATATL_SCALING_CASES = [
     (
         "small_hand_built",

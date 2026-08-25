@@ -5,10 +5,6 @@ Extends standard CTL operators to produce execution traces that demonstrate
 why formulas hold or fail, aiding debugging and result interpretation.
 """
 
-from model_checker.algorithms.explicit.shared.fixpoint_iter import (
-    least_fixpoint,
-    least_fixpoint_with_trace,
-)
 from model_checker.algorithms.explicit.CTL.operators import (
     _compute_af,
     _compute_au,
@@ -21,6 +17,10 @@ from model_checker.algorithms.explicit.CTL.preimage import (
 )
 from model_checker.algorithms.explicit.shared import (
     build_predecessor_map_forward,
+)
+from model_checker.algorithms.explicit.shared.fixpoint_iter import (
+    least_fixpoint,
+    least_fixpoint_with_trace,
 )
 from model_checker.algorithms.explicit.shared.verification_result import (
     TraceType,

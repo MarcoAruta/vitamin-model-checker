@@ -19,7 +19,7 @@ from model_checker.algorithms.explicit.ATLF.real_value_utils import (
 from model_checker.utils.literals import parse_tuple_list_literal
 
 
-def _compute_coalition_globally_fixpoint(cgs, coalition: str, phi_states, trans_cache):
+def _compute_coalition_globally_fixpoint(cgs, phi_states, trans_cache):
     """
     Greatest fixpoint for <A>G phi with real-valued semantics.
 
@@ -35,9 +35,7 @@ def _compute_coalition_globally_fixpoint(cgs, coalition: str, phi_states, trans_
     return current_value
 
 
-def _compute_coalition_eventually_fixpoint(
-    cgs, coalition: str, phi_states, trans_cache
-):
+def _compute_coalition_eventually_fixpoint(cgs, phi_states, trans_cache):
     """
     Least fixpoint for <A>F phi with real-valued semantics.
 
@@ -52,9 +50,7 @@ def _compute_coalition_eventually_fixpoint(
     return current_value
 
 
-def _compute_coalition_until_fixpoint(
-    cgs, coalition: str, phi_states, psi_states, trans_cache
-):
+def _compute_coalition_until_fixpoint(cgs, phi_states, psi_states, trans_cache):
     """
     Least fixpoint for <A>(phi U psi) with real-valued semantics.
 
@@ -89,9 +85,7 @@ def handle_coalition_globally(cgs, node):
     coalition = node.value[1:-2]
     states = _parse_real_values(node.left.value)
     trans_cache = build_transition_cache(cgs, coalition)
-    result_states = _compute_coalition_globally_fixpoint(
-        cgs, coalition, states, trans_cache
-    )
+    result_states = _compute_coalition_globally_fixpoint(cgs, states, trans_cache)
     node.value = str(result_states)
 
 
@@ -109,13 +103,11 @@ def handle_coalition_eventually(cgs, node):
     coalition = node.value[1:-2]
     states = _parse_real_values(node.left.value)
     trans_cache = build_transition_cache(cgs, coalition)
-    result_states = _compute_coalition_eventually_fixpoint(
-        cgs, coalition, states, trans_cache
-    )
+    result_states = _compute_coalition_eventually_fixpoint(cgs, states, trans_cache)
     node.value = str(result_states)
 
 
-def handle_or(cgs, node):
+def handle_or(_cgs, node):
     """Handle OR operator: max of real-valued state lists."""
     states1 = _parse_real_values(node.left.value)
     states2 = _parse_real_values(node.right.value)
@@ -123,7 +115,7 @@ def handle_or(cgs, node):
     node.value = str(res)
 
 
-def handle_and(cgs, node):
+def handle_and(_cgs, node):
     """Handle AND operator: min of real-valued state lists."""
     states1 = _parse_real_values(node.left.value)
     states2 = _parse_real_values(node.right.value)
@@ -147,6 +139,6 @@ def handle_coalition_until(cgs, node):
     states2 = _parse_real_values(node.right.value)
     trans_cache = build_transition_cache(cgs, coalition)
     result_states = _compute_coalition_until_fixpoint(
-        cgs, coalition, states1, states2, trans_cache
+        cgs, states1, states2, trans_cache
     )
     node.value = str(result_states)

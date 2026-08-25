@@ -589,7 +589,7 @@ CapATL is designed for models with explicit capacity constraints (`capCGS`), oft
 > [!NOTE]
 > **Operator Support (W):** Weak Until (`W`) is not part of CapATL path syntax and remains unsupported. Release (`R`) is accepted as a binary operator (`<{A}> phi R psi`) and evaluated by the CapATL solver (greatest fixpoint).
 - **Model Requirement**: Can only be verified against `capCGS` models.
-- **Legacy syntax**: NatATL-style `<{A}, k>` is rejected.
+- **Formula bound**: `<{A}, k>` is rejected (no numeric `k` in CapATL).
 
 **Formula Examples:**
 ```text

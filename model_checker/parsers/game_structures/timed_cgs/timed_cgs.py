@@ -1,5 +1,5 @@
-from model_checker.parsers.game_structures.cost_cgs.cost_cgs import CostCGS
 from model_checker.parsers.game_structures.cgs import cgs_parser
+from model_checker.parsers.game_structures.cost_cgs.cost_cgs import CostCGS
 from model_checker.parsers.game_structures.timed_cgs import timed_cgs_parser
 
 

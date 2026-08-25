@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vitamin-model-checker"
-version = "1.6.1"
+version = "1.6.2"
 description = "The VITAMIN model checker python package"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -204,9 +204,11 @@ extend-exclude = '''
   | build
   | dist
   | __pycache__
-  # Exclude parser generated files
+  # Exclude parser generated files (legacy parsetab.py and *Parser_parsetab.py)
   | parsetab\.py
+  | .*_parsetab\.py
   | parser\.out
+  | generated
 )/
 '''
 
@@ -221,7 +223,9 @@ use_parentheses = true
 ensure_newline_before_comments = true
 skip_glob = [
     "**/parsetab.py",
+    "**/*_parsetab.py",
     "**/parser.out",
+    "**/generated/**",
     "**/__pycache__",
     "**/.venv",
     "**/venv",
@@ -255,7 +259,9 @@ exclude = [
     "node_modules",
     "venv",
     "parsetab.py",
+    "*_parsetab.py",
     "parser.out",
+    "**/generated/**",
 ]
 
 [tool.ruff.lint]

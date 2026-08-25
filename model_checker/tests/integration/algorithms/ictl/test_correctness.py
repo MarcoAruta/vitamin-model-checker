@@ -7,8 +7,8 @@ import pytest
 
 from model_checker.algorithms.explicit.ICTL.checker import ICTLModelChecker
 from model_checker.algorithms.explicit.ICTL.ICTL import (
-    model_checking,
     _core_ictl_checking,
+    model_checking,
 )
 from model_checker.algorithms.explicit.ICTL.preimage import pre_image_all
 from model_checker.algorithms.explicit.ICTL.util.graph import (
@@ -16,10 +16,10 @@ from model_checker.algorithms.explicit.ICTL.util.graph import (
 )
 from model_checker.algorithms.explicit.shared.fixpoint_iter import greatest_fixpoint
 from model_checker.algorithms.explicit.shared.graph_relations import labeled_pairs
-from model_checker.utils.literals import parse_state_set_literal
 from model_checker.parsers.game_structures.birelational_matrix.birelational_matrix import (
     BirelationalMatrix,
 )
+from model_checker.utils.literals import parse_state_set_literal
 
 
 def _load_cgs_file(filename):

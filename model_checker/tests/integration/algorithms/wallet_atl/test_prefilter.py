@@ -56,5 +56,5 @@ def test_wallet_atl_proceeds_on_true_atl(wallet_atl_model):
     with patch(
         "model_checker.algorithms.explicit.Wallet_ATL.Wallet_ATL.solve_tree"
     ) as mock_solve_tree:
-        result = _core_walletatl_checking(wallet_atl_model, formula)
+        _core_walletatl_checking(wallet_atl_model, formula)
         mock_solve_tree.assert_called_once()

@@ -7,8 +7,8 @@ Operators are longest-first so ``>=`` is never split as ``>``.
 import re
 
 from model_checker.parsers.syntax_patterns import (
-    COMPARISON_OPS_ALT,
     COMPARISON_OPERATORS,
+    COMPARISON_OPS_ALT,
 )
 
 # File-cell tokens that mean "no guard / no invariant on this cell".

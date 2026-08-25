@@ -7,7 +7,6 @@ Handler functions for all CapATL operators
 """
 
 from model_checker.algorithms.explicit.CapATL.preimage import pre
-
 from model_checker.algorithms.explicit.CapATL.utils import (
     pi_omega_Y,
     pi_theta,

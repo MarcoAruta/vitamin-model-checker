@@ -7,12 +7,12 @@ from model_checker.algorithms.explicit.CapATL.operators import (
     handle_and,
     handle_eventually,
     handle_globally,
+    handle_implies,
     handle_next,
     handle_not,
     handle_or,
-    handle_until,
     handle_release,
-    handle_implies,
+    handle_until,
 )
 from model_checker.algorithms.explicit.CapATL.utils import (
     X_agt_cap,

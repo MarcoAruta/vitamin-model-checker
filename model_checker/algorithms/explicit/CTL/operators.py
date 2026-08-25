@@ -7,14 +7,14 @@ Boolean connectives (NOT/OR/AND/IMPLIES) are handled by
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
-from model_checker.algorithms.explicit.shared.fixpoint_iter import (
-    greatest_fixpoint,
-    least_fixpoint,
-)
 from model_checker.algorithms.explicit.CTL.preimage import (
     pre_image_all,
     pre_image_exist,
     pre_release_universal,
+)
+from model_checker.algorithms.explicit.shared.fixpoint_iter import (
+    greatest_fixpoint,
+    least_fixpoint,
 )
 from model_checker.utils.literals import parse_state_set_literal
 

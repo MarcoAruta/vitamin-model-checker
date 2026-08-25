@@ -27,30 +27,32 @@ def compute_fixpoint_iterations(cgs, target_states, operator="EF"):
     all_states = set(cgs.states)
 
     if operator == "EF":
-        seed = target_states.copy()
-        step = lambda T: T.union(pre_image_exist(edges, T))
+        T = target_states.copy()
         invert = False
     elif operator == "EG":
-        seed = all_states.copy()
-        step = lambda T: target_states.intersection(pre_image_exist(edges, T))
+        T = all_states.copy()
         invert = False
     elif operator == "AF":
         not_target = all_states - target_states
-        seed = all_states.copy()
-        step = lambda T: not_target.intersection(pre_image_exist(edges, T))
+        T = all_states.copy()
         invert = True
     elif operator == "AG":
         not_target = all_states - target_states
-        seed = not_target.copy()
-        step = lambda T: T.union(pre_image_exist(edges, T))
+        T = not_target.copy()
         invert = True
     else:
         return None, 0
 
-    T = seed
     iterations = 0
     while True:
-        new_T = step(T)
+        if operator == "EF":
+            new_T = T.union(pre_image_exist(edges, T))
+        elif operator == "EG":
+            new_T = target_states.intersection(pre_image_exist(edges, T))
+        elif operator == "AF":
+            new_T = not_target.intersection(pre_image_exist(edges, T))
+        else:
+            new_T = T.union(pre_image_exist(edges, T))
         if new_T == T:
             break
         T = new_T

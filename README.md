@@ -43,17 +43,11 @@ parser = FormulaParserFactory.get_parser("CTL")
 
 ### Supported logics
 
-Built-in formula logics include ATL, ATLF, CapATL, CTL, IATL, ICTL, LTL, NatATL,
-NatATLF, NatSL, OATL, OL, RABATL, RBATL, TCTL, TOL, and Wallet_ATL. Model
+Built-in formula logics include ATL, ATLF, CapATL, COTL, CTL, IATL, ICTL, LTL,
+NatATL, NatATLF, NatSL, OATL, OL, RABATL, RBATL, TCTL, TOL, and Wallet_ATL. Model
 structures include CGS, BCGS, CostCGS, CapCGS, WalletCGS, and timedCGS. See
 `pyproject.toml` entry points (`vitamin.parsers`, `vitamin.models`,
 `vitamin.benchmarks`) for the full registry.
-
-## Documentation
-
-- Architecture, file formats, and logic guides live under `docs/`
-- API reference pages are generated with MkDocs (`pip install -e ".[docs]"` then
-  `mkdocs serve`)
 
 ## Repository role
 
@@ -80,39 +74,9 @@ pytest model_checker/tests/integration/
 pytest model_checker/tests/
 
 make test          # unit + integration style suite, excluding slow tests
-make test-models   # full model_checker/tests suite
 ```
 
 Test-suite details live in `model_checker/tests/README.md`.
-
-## Build docs
-
-```bash
-pip install -e ".[docs]"
-mkdocs serve
-mkdocs build --strict
-```
-
-## Benchmarks
-
-Benchmark this package with `vitamin-benchmark-model-checker`, a separate pip
-package that times `model_checking()` across logics via the `vitamin.benchmarks`
-entry points declared here.
-
-```bash
-pip install vitamin-benchmark-model-checker
-vitamin-benchmark --logic CTL --output ctl.json
-```
-
-For local development with a checkout of both repos:
-
-```bash
-pip install -e .
-pip install -e ../vitamin-benchmark-model-checker
-```
-
-See the `vitamin-benchmark-model-checker` README for compare mode, plots, and
-the full benchmark matrix.
 
 ## Docker
 
@@ -125,15 +89,6 @@ make test
 ```
 
 See `docker/README.md` for the Docker workflow.
-
-## Adding logic
-
-The recommended path is to package a new logic as a VMI bundle, validate it with
-`vitamin-module-integrator`, and let the integrator apply the files and entry
-points to this repository.
-
-Manual in-repo changes are still useful for maintainers working directly on the
-core package. See `docs/adding_a_new_logic.md` for both workflows.
 
 ## License
 

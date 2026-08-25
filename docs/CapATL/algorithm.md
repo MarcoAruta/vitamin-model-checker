@@ -19,7 +19,8 @@ phi ::= ... | <{A}> X phi | <{A}> F phi | <{A}> G phi | <{A}>(phi U psi)
            | Ki(phi) | i is prop   -- grammar forms; see theory vs impl
 ```
 
-NatATL-style `<{A}, k>` is rejected. `W` is unsupported.
+Formula bound `<{A}, k>` is rejected (no numeric `k` in CapATL). `W` is
+unsupported.
 
 ## Semantic denotations
 

@@ -21,18 +21,18 @@ from model_checker.tests.performance.performance_helpers import (
 def compute_atl_fixpoint_iterations(cgs, target_states, coalition, operator="F"):
     """Compute ATL fixpoint iterations for convergence checks."""
     if operator == "F":
-        seed = target_states.copy()
-        step = lambda T: target_states.union(pre(cgs, coalition, T))
+        T = target_states.copy()
     elif operator == "G":
-        seed = set(cgs.states)
-        step = lambda T: target_states.intersection(pre(cgs, coalition, T))
+        T = set(cgs.states)
     else:
         return None, 0
 
-    T = seed
     iterations = 0
     while True:
-        new_T = step(T)
+        if operator == "F":
+            new_T = target_states.union(pre(cgs, coalition, T))
+        else:
+            new_T = target_states.intersection(pre(cgs, coalition, T))
         if new_T == T:
             break
         T = new_T
