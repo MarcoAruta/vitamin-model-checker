@@ -3,9 +3,7 @@
 This document is the **algorithm correctness reference** for TOL: obstruction
 pre-images, zone-graph evaluation, and the code path in
 `model_checker/algorithms/explicit/TOL/`. It follows Leneutre, Malvone, and Ortiz
-(AAMAS 2025), adapted to VITAMIN `timedCGS` surface syntax. For syntax overview
-see [logic_knowledge_base.md](../logic_knowledge_base.md); for model files see
-[file_formats.md](../file_formats.md).
+(AAMAS 2025), adapted to VITAMIN `timedCGS` surface syntax.
 
 ## Overview
 
@@ -85,7 +83,7 @@ phi ::= {Jk} F phi | {Jk} G phi
 |-----------|-----------|
 | `{Jk} X phi` | One-step obstruction: `▼(k, Sat(phi))` (discrete/timed pre-image of `Sat(phi)`, filtered by `triangle`) |
 | `R`, `W` in surface syntax | Paper defines `W` as sugar; `R` is primitive |
-|\|\|, `->` | Standard boolean derived connectives |
+|`\|\|`, `->` | Standard boolean derived connectives |
 
 The paper omits `X` because continuous time has no unique next instant; the
 extension is kept for tool parity with OL-style step checks under obstruction.
@@ -116,6 +114,8 @@ from OL in VITAMIN, which uses accumulated shortest-path cost for `F`/`G`/`U`/`R
 
 Delay transitions (`d` in `Sigma_delta`) have cost `0` in the matrix; timed
 pre-images use the zone graph.
+
+Implementation techniques (zone graph, obstruction `triangle`): [algorithm_design.md](../algorithm_design.md).
 
 ## Model-checking pipeline
 

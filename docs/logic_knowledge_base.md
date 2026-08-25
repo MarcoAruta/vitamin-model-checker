@@ -15,6 +15,30 @@ per-logic `docs/<Logic>/algorithm.md` pages (for example
 [ICTL/algorithm.md](ICTL/algorithm.md)). For how to author `.txt` models, use
 [file_formats.md](file_formats.md).
 
+## Per-logic algorithm pages
+
+The algorithm pages are now split by logic so implementation details are easy
+to locate:
+
+- [CTL](CTL/algorithm.md)
+- [LTL](LTL/algorithm.md)
+- [ATL](ATL/algorithm.md)
+- [ATLF](ATLF/algorithm.md)
+- [NatATL](NatATL/algorithm.md)
+- [NatATLF](NatATLF/algorithm.md)
+- [NatSL](NatSL/algorithm.md)
+- [OATL](OATL/algorithm.md)
+- [OL](OL/algorithm.md)
+- [RBATL](RBATL/algorithm.md)
+- [RABATL](RABATL/algorithm.md)
+- [CapATL](CapATL/algorithm.md)
+- [COTL](COTL/algorithm.md)
+- [Wallet_ATL](Wallet_ATL/algorithm.md)
+- [ICTL](ICTL/algorithm.md)
+- [IATL](IATL/algorithm.md)
+- [TCTL](TCTL/algorithm.md)
+- [TOL](TOL/algorithm.md)
+
 **Logic names:** Full names are used only for logics defined in the VITAMIN paper and standard references (CTL, LTL, ATL). Other implemented logics (OATL, OL, COTL, etc.) are listed by acronym only; their expansions are not fixed in the project literature.
 
 ---

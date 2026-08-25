@@ -12,8 +12,11 @@ formats, logic implementations, or tests.
 | Add or integrate a new logic | [Adding a New Logic](adding_a_new_logic.md) |
 | Author model and formula files | [File Formats](file_formats.md) |
 | Look up syntax and theory vs implementation | [Logic Knowledge Base](logic_knowledge_base.md) |
+| Understand overall algorithm layout | [Algorithm Structure Guide](algorithm_structure.md) |
+| See shared caches and design techniques | [Algorithm Design](algorithm_design.md) |
 | Audit ICTL algorithm correctness | [ICTL Algorithm](ICTL/algorithm.md) |
 | Audit IATL algorithm correctness | [IATL Algorithm](IATL/algorithm.md) |
+| Audit timed algorithm correctness | [TCTL Algorithm](TCTL/algorithm.md), [TOL Algorithm](TOL/algorithm.md) |
 | See how this repo fits with VMI and Workbench | [VITAMIN Stack](vitamin-stack.md) |
 | Contribute to this repository | [Contributing](contributing.md) |
 | Browse Python package docs | [API Overview](api/overview.md) |
@@ -24,7 +27,10 @@ Doc roles:
 - **Knowledge base** - theory, surface syntax, short theory/impl tables.
 - **Algorithm pages** (`docs/<Logic>/algorithm.md`) - denotations, validation,
   pipelines, and what the code actually computes.
+- **Algorithm design** - shared data structures, caches, cleanup, and
+  performance techniques (no per-logic duplication).
 - **File formats** - how to write `.txt` models and formulas.
+- **Algorithm structure guide** - family-level map of where each logic fits.
 
 ## What This Repository Owns
 

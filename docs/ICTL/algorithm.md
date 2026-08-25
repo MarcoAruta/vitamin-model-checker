@@ -2,9 +2,7 @@
 
 This document is the **algorithm correctness reference** for ICTL: denotations,
 well-behavedness checks, fixpoint shapes, and the code path that implements them
-in `model_checker/algorithms/explicit/ICTL/`. For surface syntax and a short
-theory overview, see [logic_knowledge_base.md](../logic_knowledge_base.md). For
-how to write model files, see [file_formats.md](../file_formats.md).
+in `model_checker/algorithms/explicit/ICTL/`.
 
 ## Overview
 
@@ -175,7 +173,7 @@ X^up = { s in S | s^up subseteq X }
 
 | Formula | Denotation `[[.]]` |
 |---------|-------------------|
-| atom `p` | `{ s | p in V(s) }` |
+| atom `p` | `{ s \| p in V(s) }` |
 | `phi /\ psi` | `[[phi]] intersect [[psi]]` |
 | `phi \/ psi` | `[[phi]] union [[psi]]` |
 | `phi -> psi` | `([[phi]]^c union [[psi]])^up` |
@@ -229,6 +227,8 @@ they are invalid in ICTL (EUMAS25b Proposition 3).
 | `EG phi` | greatest: shrink under `Pre_exists` intersect `[[phi]]` |
 | `AF phi` | least: grow from `[[phi]]` under `Pre_forall` |
 | `AG phi` | greatest: shrink under `Pre_forall` intersect `[[phi]]` |
+
+Implementation techniques (P-upset precompute): [algorithm_design.md](../algorithm_design.md).
 
 ## Model-checking pipeline
 

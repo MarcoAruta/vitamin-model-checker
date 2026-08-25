@@ -60,7 +60,7 @@ Current built-in model types include:
 - `WalletCGS` - CGS with per-agent wallet balances (Wallet_ATL)
 - `timedCGS` - costCGS extended with clocks and zone constraints (TOL, TCTL)
 
-The checker ships 20 logics. Recent additions integrated via VMI: `Wallet_ATL`,
+The checker currently ships 18 logics. Recent additions integrated via VMI: `Wallet_ATL`,
 `TOL`, `TCTL`, `ICTL`, and `IATL`. See
 [Logic Knowledge Base](logic_knowledge_base.md) for syntax details and
 [File Formats](file_formats.md) for model file layout.

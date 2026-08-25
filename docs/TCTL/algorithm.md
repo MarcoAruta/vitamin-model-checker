@@ -2,10 +2,10 @@
 
 This document is the **algorithm correctness reference** for TCTL: zone-graph RTS,
 `rsat` labelling, freeze/guards, and the code path in
-`model_checker/algorithms/explicit/TCTL/`. It follows Chapter 6 (regional
-transition system, TCTL-minus fragment). For syntax overview see
-[logic_knowledge_base.md](../logic_knowledge_base.md); for model files see
-[file_formats.md](../file_formats.md).
+`model_checker/algorithms/explicit/TCTL/`. It follows Hugh Anderson and
+P.S. Thiagarajan, _Verification of Real-time Systems_, Chapter 6, "Model
+checking and timed CTL" (NUS CS5270 lecture notes; TIGER notes): regional
+transition system, TCTL-minus fragment, and the `rsat` labelling algorithm.
 
 ## Overview
 
@@ -73,7 +73,7 @@ A[phi U psi]_<=c  ~  y.reset(phi && A[true U (y<=c && psi)])   with fresh y in Y
 - **FREEZE** `y.phi`: region `r` satisfies `y.phi` when `r` with formula clock `y`
   reset to `0` satisfies `phi`.
 - **Until** uses region-level fixpoints with timed backward steps. Because
-  formulae are evaluated on each zone-graph node, prefix obligations correspond to
+  formula are evaluated on each zone-graph node, prefix obligations correspond to
   the paper's `phi@i` requirement along delay and discrete edges.
 - Boolean connectives are union, intersection, and complement over all regions in
   the zone graph.
@@ -94,6 +94,8 @@ Invariants
 
 Base sections (`Transition`, `Name_State`, `Initial_State`, `Atomic_propositions`,
 `Labelling`, `Number_of_agents`) match costCGS/CGS.
+
+Implementation techniques (zone graph): [algorithm_design.md](../algorithm_design.md).
 
 ## Model-checking pipeline
 

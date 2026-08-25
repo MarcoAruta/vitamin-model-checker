@@ -2,9 +2,7 @@
 
 This document is the **algorithm correctness reference** for IATL: denotations,
 well-behaved BCGS checks, coalition pre-images, fixpoints, and the code path in
-`model_checker/algorithms/explicit/IATL/`. For surface syntax and a short theory
-overview, see [logic_knowledge_base.md](../logic_knowledge_base.md). For model
-file layout, see [file_formats.md](../file_formats.md).
+`model_checker/algorithms/explicit/IATL/`.
 
 ## Overview
 
@@ -153,7 +151,7 @@ X^up = { s in S | s^up subseteq X }
 
 | Formula | Denotation |
 |---------|------------|
-| atom `p` | `{ s | p in V(s) }` |
+| atom `p` | `{ s \| p in V(s) }` |
 | `phi && psi` | intersection |
 | `phi \|\| psi` | union |
 | `phi -> psi` | `([[phi]]^c union [[psi]])^up` |
@@ -196,6 +194,8 @@ dualities are **not** used (KR 2025 Proposition 3).
 ```
 
 Implemented via `shared/fixpoint_iter.greatest_fixpoint`.
+
+Implementation techniques (P-upset precompute, per-coalition transition cache): [algorithm_design.md](../algorithm_design.md).
 
 ## Model-checking pipeline
 
