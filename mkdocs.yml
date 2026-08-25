@@ -34,6 +34,27 @@ nav:
   - Architecture: architecture.md
   - File Formats: file_formats.md
   - Logic Knowledge Base: logic_knowledge_base.md
+  - Algorithm Structure: algorithm_structure.md
+  - Algorithm Design: algorithm_design.md
+  - Logic Algorithms:
+    - CTL: CTL/algorithm.md
+    - LTL: LTL/algorithm.md
+    - ATL: ATL/algorithm.md
+    - ATLF: ATLF/algorithm.md
+    - NatATL: NatATL/algorithm.md
+    - NatATLF: NatATLF/algorithm.md
+    - NatSL: NatSL/algorithm.md
+    - OATL: OATL/algorithm.md
+    - OL: OL/algorithm.md
+    - RBATL: RBATL/algorithm.md
+    - RABATL: RABATL/algorithm.md
+    - CapATL: CapATL/algorithm.md
+    - COTL: COTL/algorithm.md
+    - Wallet_ATL: Wallet_ATL/algorithm.md
+    - ICTL: ICTL/algorithm.md
+    - IATL: IATL/algorithm.md
+    - TCTL: TCTL/algorithm.md
+    - TOL: TOL/algorithm.md
   - Wallet ATL: Wallet_ATL/usage.md
   - Adding a New Logic: adding_a_new_logic.md
   - API Reference:
