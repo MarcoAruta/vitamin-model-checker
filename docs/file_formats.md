@@ -9,8 +9,9 @@ bundles. It does not define operator denotations; those live in
 ## Model Files
 
 Model files are plain `.txt` files. Generic loaders detect a type from section
-headers. When checking a formula, the engine also uses the logic metadata
-`model_type` (for example ICTL always loads `BirelationalMatrix`).
+headers and, for ICTL, from birelational `Transition` cell tokens (`P` / `P,R`).
+When checking a formula, the engine also uses the logic metadata `model_type`
+(for example ICTL always loads `BirelationalMatrix`).
 
 Use a simple file name such as:
 
@@ -24,7 +25,7 @@ cotl_model.txt
 | Model type | Used by | What it adds / how detected |
 |---|---|---|
 | `CGS` | ATL, CTL, LTL, NatATL, NatSL, ... | Standard concurrent game structure (default when no extension headers). |
-| `BirelationalMatrix` | ICTL | Same sections as CGS; `Transition` cells are `0`/`R`/`P`/`P,R`. Selected via ICTL metadata (not by a unique header). |
+| `BirelationalMatrix` | ICTL | Same sections as CGS; `Transition` cells are `0`/`R`/`P`/`P,R`. Detected when Transition rows use only those cells and include `P` or `P,R`; ICTL metadata also forces this type. |
 | `BCGS` | IATL | CGS transitions plus boolean `Preorder` section (detected when `Preorder` is present). |
 | `costCGS` | OATL, OL, RBATL, RABATL, COTL | Cost/resource information for actions and transitions. |
 | `capCGS` | CapATL | Capability declarations and assignments. |

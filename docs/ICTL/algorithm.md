@@ -295,7 +295,6 @@ and formula.
 | `ICTL/preimage.py` | R-pre-images |
 | `ICTL/util/graph.py` | `get_preorder` (P-upset transitive closure) |
 | `ICTL/util/validation.py` | `check_conditions_hold` (C1/C2 and frame checks) |
-| `ICTL/util/generators.py` | Optional experiment-model helper |
 | `shared/graph_relations.py` | `labeled_pairs` used by validation |
 | `parsers/game_structures/birelational_matrix/` | Model loader |
 | `parsers/formulas/ICTL/` | PLY parser (`ICTLParser`) |

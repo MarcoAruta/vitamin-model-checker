@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.3] - 2026-08-26
+
+### Fixed
+
+- `detect_model_type_from_content` recognizes ICTL BirelationalMatrix files
+  whose Transition cells use only `0` / `R` / `P` / `P,R` (with a `P` or
+  `P,R` marker), instead of classifying them as plain CGS.
+
 ## [1.6.2] - 2026-08-25
 
 ### Added

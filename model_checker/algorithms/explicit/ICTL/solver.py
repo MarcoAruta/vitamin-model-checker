@@ -1,4 +1,4 @@
-"""Formula tree solver for ICTL."""
+"""Formula tree solver for ICTL - migrated to use shared solver_core."""
 
 from typing import TYPE_CHECKING, Any
 
@@ -18,6 +18,7 @@ from model_checker.algorithms.explicit.ICTL.operators import (
     handle_not,
     handle_or,
 )
+from model_checker.algorithms.explicit.shared.solver_core import solve_formula_tree
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
 
 if TYPE_CHECKING:
@@ -25,46 +26,68 @@ if TYPE_CHECKING:
     from model_checker.utils.formula_tree import FormulaTreeNode
 
 
-def _unary_handler(
-    parser: Any, checker: "ICTLModelChecker", node: "FormulaTreeNode"
-) -> Any | None:
-    val = node.value
-    if parser.verify("NOT", val):
-        return handle_not
-    if parser.verify("FORALL", val) and parser.verify("NEXT", val):
-        return handle_ax
-    if parser.verify("EXIST", val) and parser.verify("NEXT", val):
-        return handle_ex
-    if parser.verify("EXIST", val) and parser.verify("GLOBALLY", val):
-        return handle_eg
-    if parser.verify("FORALL", val) and parser.verify("GLOBALLY", val):
-        return handle_ag
-    if parser.verify("EXIST", val) and parser.verify("EVENTUALLY", val):
-        return handle_ef
-    if parser.verify("FORALL", val) and parser.verify("EVENTUALLY", val):
-        return handle_af
+# Operator mappings for solver_core
+_UNARY_OPERATORS = {
+    "NOT": handle_not,
+    "AX": handle_ax,
+    "EX": handle_ex,
+    "AG": handle_ag,
+    "EG": handle_eg,
+    "AF": handle_af,
+    "EF": handle_ef,
+}
+
+_BINARY_OPERATORS = {
+    "OR": handle_or,
+    "AND": handle_and,
+    "IMPLIES": handle_implies,
+    "AU": handle_au,
+    "EU": handle_eu,
+    "AR": handle_ar,
+    "ER": handle_er,
+}
+
+
+def _ictl_unary_key(parser_instance: Any, val: Any) -> str | None:
+    """Map node value to unary operator key."""
+    if parser_instance.verify("NOT", val):
+        return "NOT"
+    if parser_instance.verify("FORALL", val) and parser_instance.verify("NEXT", val):
+        return "AX"
+    if parser_instance.verify("EXIST", val) and parser_instance.verify("NEXT", val):
+        return "EX"
+    if parser_instance.verify("FORALL", val) and parser_instance.verify("GLOBALLY", val):
+        return "AG"
+    if parser_instance.verify("EXIST", val) and parser_instance.verify("GLOBALLY", val):
+        return "EG"
+    if parser_instance.verify("FORALL", val) and parser_instance.verify("EVENTUALLY", val):
+        return "AF"
+    if parser_instance.verify("EXIST", val) and parser_instance.verify("EVENTUALLY", val):
+        return "EF"
     return None
 
 
-def _binary_handler(
-    parser: Any, checker: "ICTLModelChecker", node: "FormulaTreeNode"
-) -> Any | None:
-    val = node.value
-    if parser.verify("OR", val):
-        return handle_or
-    if parser.verify("AND", val):
-        return handle_and
-    if parser.verify("IMPLIES", val):
-        return handle_implies
-    if parser.verify("EXIST", val) and parser.verify("UNTIL", val):
-        return handle_eu
-    if parser.verify("FORALL", val) and parser.verify("UNTIL", val):
-        return handle_au
-    if parser.verify("EXIST", val) and parser.verify("RELEASE", val):
-        return handle_er
-    if parser.verify("FORALL", val) and parser.verify("RELEASE", val):
-        return handle_ar
+def _ictl_binary_key(parser_instance: Any, val: Any) -> str | None:
+    """Map node value to binary operator key."""
+    if parser_instance.verify("OR", val):
+        return "OR"
+    if parser_instance.verify("AND", val):
+        return "AND"
+    if parser_instance.verify("IMPLIES", val):
+        return "IMPLIES"
+    if parser_instance.verify("EXIST", val) and parser_instance.verify("UNTIL", val):
+        return "EU"
+    if parser_instance.verify("FORALL", val) and parser_instance.verify("UNTIL", val):
+        return "AU"
+    if parser_instance.verify("EXIST", val) and parser_instance.verify("RELEASE", val):
+        return "ER"
+    if parser_instance.verify("FORALL", val) and parser_instance.verify("RELEASE", val):
+        return "AR"
     return None
+
+
+# Boolean operators that don't need extra processing
+_BOOLEAN_KEYS = {"OR", "AND", "IMPLIES", "NOT"}
 
 
 def solve_tree(
@@ -72,26 +95,18 @@ def solve_tree(
     node: "FormulaTreeNode",
     parser: Any | None = None,
 ) -> None:
-    """Evaluate the formula tree bottom-up."""
+    """Evaluate the ICTL formula tree bottom-up using shared solver_core."""
     if parser is None:
         parser = FormulaParserFactory.get_parser_instance("ICTL")
 
-    if node.left is not None:
-        solve_tree(checker, node.left, parser)
-    if node.right is not None:
-        solve_tree(checker, node.right, parser)
-
-    if node.right is None:
-        if node.left is None:
-            return
-        handler = _unary_handler(parser, checker, node)
-        if handler is None:
-            raise ValueError(f"Unsupported ICTL unary operator: {node.value!r}")
-        handler(checker, node)
-        return
-
-    if node.left is not None and node.right is not None:
-        handler = _binary_handler(parser, checker, node)
-        if handler is None:
-            raise ValueError(f"Unsupported ICTL binary operator: {node.value!r}")
-        handler(checker, node)
+    solve_formula_tree(
+        checker,  # Pass checker as the first argument
+        node,
+        parser,
+        _UNARY_OPERATORS,
+        _BINARY_OPERATORS,
+        _ictl_unary_key,
+        _ictl_binary_key,
+        _BOOLEAN_KEYS,
+        extra_args=(),
+    )

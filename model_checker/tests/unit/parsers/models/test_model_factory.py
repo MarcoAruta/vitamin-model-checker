@@ -37,3 +37,23 @@ class TestDetectModelTypeFromContent:
     def test_preorder_header_selects_bcgs(self):
         content = "Transition\n*\nPreorder\n1\n"
         assert detect_model_type_from_content(content) == "BCGS"
+
+    def test_birelational_transition_cells_select_birelational_matrix(self):
+        content = (
+            "Transition\n"
+            "P,R P\n"
+            "0 P,R\n"
+            "Name_State\ns0 s1\n"
+            "Initial_State\ns0\n"
+            "Atomic_propositions\ne\n"
+            "Labelling\n1\n0\n"
+            "Number_of_agents\n1\n"
+        )
+        assert detect_model_type_from_content(content) == "BirelationalMatrix"
+
+    def test_plain_cgs_star_transition_is_not_birelational(self):
+        content = (
+            "Transition\n*\nName_State\ns0\nInitial_State\ns0\n"
+            "Atomic_propositions\ne\nLabelling\n1\nNumber_of_agents\n1\n"
+        )
+        assert detect_model_type_from_content(content) == "CGS"

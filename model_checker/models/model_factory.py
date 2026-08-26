@@ -1,7 +1,7 @@
 """Factory for creating game structure parser instances.
 
-Detects game structure type (CGS, costCGS, capCGS) from files and
-instantiates the correct parser.
+Detects game structure type (CGS, costCGS, capCGS, WalletCGS, timedCGS,
+BCGS, BirelationalMatrix) from files and instantiates the correct parser.
 """
 
 import os
@@ -12,6 +12,59 @@ from model_checker.parsers.game_structures.cap_cgs.cap_cgs import CapCGS
 from model_checker.parsers.game_structures.cgs.cgs import CGS
 from model_checker.parsers.game_structures.cost_cgs.cost_cgs import CostCGS
 
+# Transition cells unique to ICTL birelational matrices (not CGS joint actions).
+_BIRELATIONAL_CELL_TOKENS = frozenset({"0", "R", "P", "P,R"})
+_BIRELATIONAL_MARKER_TOKENS = frozenset({"P", "P,R"})
+
+_MODEL_SECTION_HEADERS = frozenset(
+    {
+        "Transition",
+        "Unknown_Transition_by",
+        "Name_State",
+        "Initial_State",
+        "Atomic_propositions",
+        "Labelling",
+        "Number_of_agents",
+        "Agent_labels",
+        "Wallets",
+        "Clocks",
+        "Clock_constraints",
+        "Invariants",
+        "Preorder",
+        "Transition_With_Costs",
+        "Costs_for_actions",
+        "Costs_for_actions_split",
+        "Capacities",
+        "Capacities_assignment",
+        "Actions_for_capacities",
+    }
+)
+
+
+def _has_birelational_transition_cells(content: str) -> bool:
+    """True when Transition rows use only 0/R/P/P,R and include a P marker."""
+    in_transition = False
+    found_marker = False
+    for raw in content.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line in _MODEL_SECTION_HEADERS:
+            if in_transition:
+                break
+            in_transition = line == "Transition"
+            continue
+        if not in_transition:
+            continue
+        tokens = line.split()
+        if not tokens:
+            continue
+        if not all(token in _BIRELATIONAL_CELL_TOKENS for token in tokens):
+            return False
+        if any(token in _BIRELATIONAL_MARKER_TOKENS for token in tokens):
+            found_marker = True
+    return found_marker
+
 
 def detect_model_type_from_file(filename: str) -> str:
     """Detect model type from model file content.
@@ -20,7 +73,7 @@ def detect_model_type_from_file(filename: str) -> str:
         filename: Path to the model file.
 
     Returns:
-        One of CGS, costCGS, or capCGS.
+        Detected model type id (e.g. CGS, costCGS, BirelationalMatrix).
     """
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"Model file not found: {filename}")
@@ -38,7 +91,8 @@ def detect_model_type_from_content(content: str) -> str:
         content: Model file content as string.
 
     Returns:
-        One of CGS, costCGS, or capCGS.
+        One of CGS, costCGS, capCGS, WalletCGS, timedCGS, BCGS, or
+        BirelationalMatrix.
     """
     lines = {line.strip() for line in content.splitlines()}
     if "Wallets" in lines:
@@ -55,6 +109,8 @@ def detect_model_type_from_content(content: str) -> str:
         return "capCGS"
     if "Preorder" in lines:
         return "BCGS"
+    if _has_birelational_transition_cells(content):
+        return "BirelationalMatrix"
     return "CGS"
 
 
