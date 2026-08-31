@@ -5,12 +5,18 @@ BCGS, BirelationalMatrix) from files and instantiates the correct parser.
 """
 
 import os
+from typing import Callable
 
 from model_checker.discovery import discover_logic_resource
 from model_checker.parsers.game_structures.bcgs.bcgs import BCGS
+from model_checker.parsers.game_structures.birelational_matrix.birelational_matrix import (
+    BirelationalMatrix,
+)
 from model_checker.parsers.game_structures.cap_cgs.cap_cgs import CapCGS
 from model_checker.parsers.game_structures.cgs.cgs import CGS
 from model_checker.parsers.game_structures.cost_cgs.cost_cgs import CostCGS
+from model_checker.parsers.game_structures.timed_cgs.timed_cgs import TimedCGS
+from model_checker.parsers.game_structures.wallet_cgs.wallet_cgs import WalletCGS
 
 # Transition cells unique to ICTL birelational matrices (not CGS joint actions).
 _BIRELATIONAL_CELL_TOKENS = frozenset({"0", "R", "P", "P,R"})
@@ -114,13 +120,32 @@ def detect_model_type_from_content(content: str) -> str:
     return "CGS"
 
 
+_MODEL_TYPE_CONSTRUCTORS: dict[str, Callable[[], CGS | CostCGS | CapCGS | BCGS | BirelationalMatrix | TimedCGS | WalletCGS]] = {
+    "CGS": CGS,
+    "costCGS": CostCGS,
+    "capCGS": CapCGS,
+    "WalletCGS": WalletCGS,
+    "timedCGS": TimedCGS,
+    "BCGS": BCGS,
+    "BirelationalMatrix": BirelationalMatrix,
+}
+
+
+def _create_parser_direct(model_type: str):
+    constructor = _MODEL_TYPE_CONSTRUCTORS.get(model_type)
+    if constructor is None:
+        raise ImportError(f"Unknown or unsupported model type: '{model_type}'.")
+    return constructor()
+
+
 def create_model_parser(
     filename: str, expected_type: str = None
-) -> BCGS | CGS | CostCGS | CapCGS:
+) -> BCGS | CGS | CostCGS | CapCGS | BirelationalMatrix | TimedCGS | WalletCGS:
     """Create appropriate model parser instance based on model file content.
 
     Detects the game structure type or uses the expected type to resolve
-    the parser class from registered entry points.
+    the parser class from registered entry points, with a direct-import
+    fallback when entry points are unavailable.
     """
     actual_type = expected_type or detect_model_type_from_file(filename)
 
@@ -130,15 +155,15 @@ def create_model_parser(
             group="vitamin.models",
             resource_type_label="Model type",
         )
-    except LookupError as e:
-        raise ImportError(f"Unknown or unsupported model type: '{actual_type}'.") from e
+    except LookupError:
+        return _create_parser_direct(actual_type)
 
     return parser_class()
 
 
 def create_model_parser_for_logic(
     filename: str, logic_type: str = None
-) -> BCGS | CGS | CostCGS | CapCGS:
+) -> BCGS | CGS | CostCGS | CapCGS | BirelationalMatrix | TimedCGS | WalletCGS:
     """Create appropriate model parser instance based on formula type requirements.
 
     Args:
