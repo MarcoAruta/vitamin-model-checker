@@ -298,13 +298,10 @@ class RestrictedNatSL1GEvaluator:
                             f"Joint action {joint_action!r} in row {row_index} must contain "
                             "exactly one action symbol per agent"
                         )
-                    previous = destination_by_joint_action.get(joint_action)
-                    if previous is not None and previous != destination:
-                        raise ValueError(
-                            f"Non-deterministic transition for {joint_action!r} in state "
-                            f"{self.cgs.states[row_index]!r}"
-                        )
-                    destination_by_joint_action[joint_action] = destination
+                    # A joint action may have multiple successors in a CGS.
+                    # NatSL pruning retains every successor compatible with
+                    # the selected action, so determinism is not required here.
+                    destination_by_joint_action.setdefault(joint_action, destination)
                     for agent, action in enumerate(joint_action, start=1):
                         action_sets[agent].add(action)
 

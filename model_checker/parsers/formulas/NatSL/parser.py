@@ -44,8 +44,8 @@ class NatSLFormula:
     goal: TemporalGoal
 
 
-_QUANTIFIER_RE = re.compile(r"\s*([EA])(?:\{(\d+)\})?([a-z][a-z0-9_]*)")
-_BINDING_RE = re.compile(r"\s*\(([a-z][a-z0-9_]*),\s*(\d+)\)")
+_QUANTIFIER_RE = re.compile(r"\s*([EA])(?:\{(\d+)\})?([A-Za-z_][A-Za-z0-9_]*?)(?=\s*(?:[EA](?:\{\d+\})?[A-Za-z_]|$))")
+_BINDING_RE = re.compile(r"\s*\(([A-Za-z_][A-Za-z0-9_]*),\s*(\d+)\)")
 _GOAL_RE = re.compile(
     r"\s*(!|not\s+)?\s*([FGX])\s*([A-Za-z_][A-Za-z0-9_.]*)\s*$",
     re.IGNORECASE,
@@ -258,3 +258,67 @@ def convert_natsl_to_natatl(text: str) -> list[str]:
 
 def convert_natsl_to_natatl_separated(text: str) -> tuple[list[str], list[str]]:
     return convert_natsl_to_natatl(text), []
+
+
+class NatSLParser:
+    """Backward-compatible wrapper for legacy NatSL parser callers."""
+
+    _RESERVED_TEMPORAL_ATOMS = {
+        "exist",
+        "forall",
+        "and",
+        "eventually",
+        "not",
+        "E",
+        "A",
+    }
+
+    def __init__(self):
+        self.errors = []
+
+    def parse(self, text):
+        self.errors = []
+
+        # Backward compatibility: legacy NatSL syntax allowed omitted bounds,
+        # e.g. `E x:` and `A y:`. Interpret omitted bounds as 1.
+        text = re.sub(
+            r"(?<![A-Za-z0-9_])([EA])\s+([A-Za-z_][A-Za-z0-9_]*)",
+            r"\1{1}\2",
+            text,
+        )
+
+        try:
+            formula = parse_formula(text)
+        except NatSLParseError as exc:
+            self.errors.append(str(exc))
+            return None
+
+        atom = formula.goal.proposition
+
+        if atom in self._RESERVED_TEMPORAL_ATOMS:
+            self.errors.append(
+                f"Reserved keyword {atom!r} cannot be used as a temporal atom"
+            )
+            return None
+
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", atom):
+            self.errors.append(f"Invalid temporal atom {atom!r}")
+            return None
+
+        quantifiers = [
+            (q.kind, q.variable, q.bound)
+            for q in formula.quantifiers
+        ]
+
+        bindings = [
+            (variable, str(agent))
+            for variable, agent in formula.bindings
+        ]
+
+        temporal = (
+            ("!", formula.goal.operator, formula.goal.proposition)
+            if formula.goal.negated
+            else (formula.goal.operator, formula.goal.proposition)
+        )
+
+        return quantifiers, bindings, temporal
