@@ -14,7 +14,7 @@ class TestNatATLErrorHandling:
 
     def test_natatl_invalid_formula_syntax(self, natatl_standard_model):
         """Test NatATL with invalid formula syntax."""
-        result = model_checking("INVALID_FORMULA", natatl_standard_model.filename)
+        result = model_checking("<{1},1>F (", natatl_standard_model.filename)
         assert "error" in result
         assert result["error"]["type"] == "syntax"
 

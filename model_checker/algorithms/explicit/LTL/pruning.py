@@ -55,6 +55,7 @@ def process_transition_matrix_data(cgs, model, agents, *strategies):
                     num_agents=cgs.get_number_of_agents(),
                     state_to_index=state_to_index,
                     in_place=True,
+                    allow_wildcards=True,
                 )
             else:
                 if state_set:
@@ -71,6 +72,7 @@ def process_transition_matrix_data(cgs, model, agents, *strategies):
                     num_agents=cgs.get_number_of_agents(),
                     state_to_index=state_to_index,
                     in_place=True,
+                    allow_wildcards=True,
                 )
 
     return graph

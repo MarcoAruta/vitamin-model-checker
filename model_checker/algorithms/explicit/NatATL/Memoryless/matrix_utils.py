@@ -43,6 +43,7 @@ def modify_matrix(
     *,
     state_to_index: dict[str, int],
     in_place: bool = False,
+    allow_wildcards: bool = False,
 ) -> list[list]:
     """Keep only transitions where one agent plays action in the given states.
 
@@ -63,14 +64,24 @@ def modify_matrix(
 
     tuple_idx = agents[agent_index - 1] - 1
     required_token = normalize_action_token(action)
-    allowed_tokens = {CANONICAL_IDLE_TOKEN, required_token}
+    allowed_tokens = {required_token}
     agent_count = num_agents if num_agents is not None else max(agents, default=0)
 
     target_graph = graph if in_place else list(graph)
     for i in rows_to_update:
         row = graph[i] if in_place else graph[i][:]
         for j, elem in enumerate(row):
-            if not isinstance(elem, str) or elem == "*":
+            if isinstance(elem, str) and "*" in elem:
+                if allow_wildcards:
+                    # Preserve wildcard transitions for legacy LTL callers.
+                    continue
+                raise ValueError(
+                    "NatATL strict pruning does not yet support wildcard "
+                    "joint-action profiles ('*'). Encode explicit actions "
+                    "before performing bounded model checking."
+                )
+
+            if not isinstance(elem, str):
                 continue
             row[j] = _filter_joint_cell(
                 elem,
