@@ -79,7 +79,10 @@ def _core_synthesize_strategy(
     except ValueError as e:
         return create_error_response("semantic", str(e))
 
-    resolved_state = state if state is not None else cgs.initial_state
+    try:
+        resolved_state = verifier.resolve_state(model, state)
+    except ValueError as e:
+        return create_error_response("semantic", str(e))
 
     try:
         result = verifier.witness(parsed_formula, model, state=state)

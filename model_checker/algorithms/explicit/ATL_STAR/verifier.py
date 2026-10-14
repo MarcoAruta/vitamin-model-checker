@@ -179,7 +179,7 @@ def holds(formula: Formula, model: AdaptedCGS, state: str | None = None) -> bool
         ValueError: `state` isn't a state of `model`, or `formula` references
             a proposition name that isn't among `model`'s declared ones.
     """
-    state = _resolve_state(model, state)
+    state = resolve_state(model, state)
     return state in sat(formula, model)
 
 
@@ -226,7 +226,7 @@ def require_simple_coalition(formula: Formula) -> Coalition:
         )
     if _contains_coalition(formula.path_formula):
         raise ValueError(
-            f"a coalition nested inside another's path formula is not supported yet"
+            "a coalition nested inside another's path formula is not supported yet"
         )
     return formula
 
@@ -253,7 +253,7 @@ def witness(
         ValueError: `state` isn't a state of `model`, or an agent in
             `formula.agents` isn't among `model.players`.
     """
-    state = _resolve_state(model, state)
+    state = resolve_state(model, state)
     solution = _solve_coalition(formula, model)
     start = (state, solution.aut_init)
     if start not in solution.winning:
@@ -266,7 +266,12 @@ def witness(
     )
 
 
-def _resolve_state(model: AdaptedCGS, state: str | None) -> str:
+def resolve_state(model: AdaptedCGS, state: str | None) -> str:
+    """`state`, or `model`'s own initial state if `state` is `None`.
+
+    Raises:
+        ValueError: `state` isn't a state of `model`.
+    """
     if state is None:
         (state,) = model.transition_system.initial_states
         return state
