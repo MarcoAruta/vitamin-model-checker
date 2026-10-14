@@ -63,7 +63,7 @@ realistic model sizes, the explicit-state product/arena construction here
 No official PyPI wheel from the Spot team. On Linux, the community
 [`spottl`](https://pypi.org/project/spottl/) package gives one anyway
 (imports as `spot`), and is installed automatically as a regular
-dependency of `vitamin-model-checker` on that platform — no separate step
+dependency of `vitamin-model-checker` on that platform, no separate step
 or extra needed:
 
 ```bash
@@ -91,21 +91,35 @@ CGS.read_file -> ATLStarParser.parse -> cgs_adapter.adapt -> verifier.sat
 
 `ATL_STAR.model_checking`'s result dict is the usual satisfaction dict
 (satisfying states, whether the initial state holds), same as every other
-logic here. It does not return a strategy — kept that way deliberately, so
+logic here. It does not return a strategy, kept that way deliberately, so
 this entry point stays focused on plain model checking.
 
 A second, separate entry point, `ATL_STAR.synthesize_strategy(formula,
 filename, state=None)`, returns one instead, as a JSON-serializable dict
-(`{"satisfied": bool, "strategy": [...] | None, ...}`, same `res`/
-`initial_state`/`error` conventions as `model_checking`) — meant to be
-imported and called directly by a consumer that specifically wants a
-strategy, not dispatched through the generic `vitamin.benchmarks`
-entry-point registry (which only knows the fixed two-argument
-`model_checking` shape).
+(`{"satisfied": bool, "strategy": {"start": ..., "moves": [...],
+"transitions": [...]} | None, ...}`, same `res`/`initial_state`/`error`
+conventions as `model_checking`), meant to be imported and called
+directly by a consumer that specifically wants a strategy, not dispatched
+through the generic `vitamin.benchmarks` entry-point registry (which only
+knows the fixed two-argument `model_checking` shape).
+
+`strategy["start"]` is the `(state, memory)` position to begin from.
+`memory` is the underlying automaton's own state number, tracking how
+much of the temporal formula has already been satisfied along the run so
+far (e.g. whether an `U`'s left side already held), not a CGS concept,
+just the bookkeeping the strategy needs. `strategy["moves"]` lists the
+coalition's own action at every position reachable from `start`.
+`strategy["transitions"]` lists, for each such position, every real
+successor consistent with that move (more than one when the rest of the
+system is still free to respond differently), each tagged with the full
+joint action that leads there. A consumer replays a run by starting at
+`start`, reading the coalition's move for the current position from
+`moves`, and once it observes what actually happened, finding the
+matching row in `transitions` to know the next position.
 
 Only supports a formula whose outermost operator is a single coalition
 with no further coalition nested inside its path formula
-(`verifier.require_simple_coalition`) — a top-level boolean combination of
+(`verifier.require_simple_coalition`), a top-level boolean combination of
 coalitions (`<<1>> F p & <<2>> G q`) or a nested one
 (`<<1>> G <<2>> F p`) comes back as a "semantic" error instead. Both would
 need more than one independent strategy to represent faithfully; broader
@@ -113,9 +127,9 @@ support is deferred to a later iteration.
 
 For the general case (nested coalitions included), `verifier.witness(formula,
 model, state)` still returns the full `Witness`, including nested witnesses
-via `Witness.nested_witnesses_at` — `strategy_export.export_strategy`/
-`synthesize_strategy` only flatten the coalition's own, top-level strategy
-to JSON, deliberately not the nested part yet.
+via `Witness.nested_witnesses_at`. `strategy_export.export_strategy` only
+flattens the coalition's own, top-level strategy to JSON, deliberately not
+the nested part yet.
 
 ## Code map
 
@@ -124,7 +138,7 @@ to JSON, deliberately not the nested part yet.
 | `ATL_STAR/ATL_STAR.py` | Entry |
 | `ATL_STAR/verifier.py` | Bottom-up elimination, LTL rendering, game construction/solving, formula-shape validation |
 | `ATL_STAR/cgs_adapter.py` | CGS to `TransitionSystem` adapter |
-| `ATL_STAR/strategy_export.py` | Flattens a `Witness` into JSON-serializable rows (`export_strategy`), composes parsing/adaptation/witness/export (`synthesize_strategy`) |
+| `ATL_STAR/strategy_export.py` | Flattens a `Witness` into a JSON-serializable `start`/`moves`/`transitions` dict (`export_strategy`) |
 | `parsers/formulas/ATL_STAR/grammar.py` | Tokenizer/recursive-descent parser |
 | `parsers/formulas/ATL_STAR/formula.py` | Formula AST |
 | `model_checker/automata/` | Vendored `automata_mc`: `Automaton`, `product`, `complete`, `concurrent_to_turnbased`, `solve` |
