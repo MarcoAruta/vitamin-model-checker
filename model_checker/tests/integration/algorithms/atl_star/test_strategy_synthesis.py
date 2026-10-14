@@ -46,6 +46,9 @@ class TestSynthesizeStrategyCore:
         assert result["satisfied"] is True
         assert result["strategy"]
         json.dumps(result["strategy"])  # must not raise
+        moves = result["strategy"]["moves"]
+        assert all(row["agent"] == 1 for row in moves)
+        assert {(r["agent"], r["action"]) for r in moves if r["state"] == "s0"} == {(1, "a")}
 
     def test_reports_the_formula_does_not_hold_without_erroring(self, temp_file):
         """<<2>> X p doesn't hold at s0 (only agent 1 controls reaching s1) --
@@ -61,6 +64,8 @@ class TestSynthesizeStrategyCore:
         cgs = _two_state_model(temp_file)
         result = _core_synthesize_strategy(cgs, "<<2>> X p", "s1")
         assert result["satisfied"] is True
+        assert result["strategy"]["start"]["state"] == "s1"
+        assert all(row["state"] != "s0" for row in result["strategy"]["moves"])
 
     def test_rejects_a_nested_coalition(self, temp_file):
         cgs = _two_state_model(temp_file)
@@ -76,6 +81,24 @@ class TestSynthesizeStrategyCore:
         assert result["error"]["type"] == "semantic"
         assert "single coalition" in result["error"]["message"]
 
+    def test_rejects_an_unknown_state(self, temp_file):
+        cgs = _two_state_model(temp_file)
+        result = _core_synthesize_strategy(cgs, "<<1>> X p", "nosuch")
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
+
+    def test_rejects_an_unknown_proposition(self, temp_file):
+        cgs = _two_state_model(temp_file)
+        result = _core_synthesize_strategy(cgs, "<<1>> X zz", None)
+        assert "error" in result
+        assert result["error"]["type"] == "semantic"
+
+    def test_rejects_a_syntax_error(self, temp_file):
+        cgs = _two_state_model(temp_file)
+        result = _core_synthesize_strategy(cgs, "<<1>> X (", None)
+        assert "error" in result
+        assert result["error"]["type"] == "syntax"
+
 
 @pytest.mark.integration
 @pytest.mark.model_checking
@@ -89,6 +112,8 @@ class TestSynthesizeStrategyRealEntryPoint:
         assert "error" not in result
         assert result["satisfied"] is True
         json.dumps(result["strategy"])
+        assert result["formula"] == "<<1,2>> F (p & q)"
+        assert result["model"] == cgs_simple_parser.filename
 
     def test_an_explicit_state_is_threaded_through(self, cgs_simple_parser):
         result = synthesize_strategy(
