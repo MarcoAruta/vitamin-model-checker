@@ -22,12 +22,12 @@ Two things `witness.strategy.choices` alone doesn't give a consumer:
   successor, carrying the full joint action that leads to it), not a single
   next-state column.
 
-Nested witnesses (`Witness.nested`) are out of scope for now, only the
-coalition's own strategy is exported, `synthesize_strategy` enforces this
-by rejecting any formula with a nested coalition before a `Witness` with a
-non-empty `nested` could ever be produced; `export_strategy` itself also
-rejects one directly, in case it's ever called with a `Witness` bypassing
-that check.
+Nested witnesses (`Witness.nested`) are out of scope for now: callers
+(`ATL_STAR._core_synthesize_strategy`) only ever build a `Witness` through
+`verifier.require_simple_coalition`, which already rejects a formula with a
+nested coalition before such a `Witness` could exist; `export_strategy`
+itself also rejects one directly, in case it's ever called with a `Witness`
+bypassing that check.
 """
 
 from __future__ import annotations
@@ -35,11 +35,7 @@ from __future__ import annotations
 from collections.abc import Hashable
 from typing import TypedDict, cast
 
-from model_checker.parsers.formulas.ATL_STAR.grammar import parse
-from model_checker.parsers.game_structures.cgs.protocols import CGSProtocol
-
-from .cgs_adapter import adapt
-from .verifier import Witness, require_simple_coalition, witness
+from .verifier import Witness
 
 
 class Position(TypedDict):
@@ -145,34 +141,3 @@ def export_strategy(witness: Witness) -> StrategyExport:
         "moves": moves,
         "transitions": transitions,
     }
-
-
-def synthesize_strategy(
-    cgs: CGSProtocol, formula_text: str, state: str | None = None
-) -> StrategyExport | None:
-    """Parse `formula_text`, adapt `cgs`, and return the coalition's own
-    witness strategy at `state` (default: `cgs`'s own initial state) as a
-    JSON-serializable `start`/`moves`/`transitions` structure, or `None` if
-    the formula doesn't hold there.
-
-    Only supports a formula whose outermost operator is a single coalition
-    with no further coalition nested inside its path formula (see
-    `verifier.require_simple_coalition`), broader shapes (nested
-    coalitions, top-level boolean combinations of coalitions) are rejected
-    with a clear error, deferred to a later iteration.
-
-    Raises:
-        ATLStarParseError: `formula_text` is malformed, or a coalition
-            names an agent id outside `cgs`'s own agents.
-        ValueError: `formula_text` doesn't parse to a single, non-nested
-            coalition formula, `state` isn't a state of `cgs`, or an agent
-            in the coalition isn't among `cgs`'s agents.
-    """
-    model = adapt(cgs)
-    formula = require_simple_coalition(
-        parse(formula_text, num_agents=len(model.players))
-    )
-    result = witness(formula, model, state=state)
-    if result is None:
-        return None
-    return export_strategy(result)
