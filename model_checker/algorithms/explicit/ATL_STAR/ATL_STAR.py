@@ -24,24 +24,48 @@ from model_checker.engine.execution import (
     execute_model_checking_with_parser,
 )
 from model_checker.parsers.formula_parser_factory import FormulaParserFactory
+from model_checker.parsers.formulas.ATL_STAR.formula import Formula
 from model_checker.utils.error_handler import create_error_response
 
 if TYPE_CHECKING:
     from model_checker.parsers.game_structures.cgs.cgs import CGS
 
 
-def _core_atl_star_checking(cgs: "CGS", formula: str) -> dict[str, Any]:
-    """Run ATL* model checking on a loaded model."""
+class _ParseAdaptError(Exception):
+    """Carries a pre-built VITAMIN error response, raised by `_parse_and_adapt`."""
+
+    def __init__(self, response: dict[str, Any]) -> None:
+        super().__init__(response.get("res", ""))
+        self.response = response
+
+
+def _parse_and_adapt(cgs: "CGS", formula: str) -> tuple[Formula, cgs_adapter.AdaptedCGS]:
+    """Parse `formula` and adapt `cgs`, the boilerplate every ATL_STAR entry
+    point needs before it can do its own, different thing.
+
+    Raises:
+        _ParseAdaptError: parsing failed, or `cgs_adapter.adapt` rejected `cgs`.
+    """
     parser = FormulaParserFactory.get_parser_instance("ATL_STAR")
     parsed_formula = parser.parse(formula, n_agent=cgs.get_number_of_agents())
     if parsed_formula is None:
         error_msg = parser.errors[0] if parser.errors else "Syntax error in formula"
-        return create_error_response("syntax", error_msg)
+        raise _ParseAdaptError(create_error_response("syntax", error_msg))
 
     try:
         model = cgs_adapter.adapt(cgs)
     except ValueError as e:
-        return create_error_response("semantic", str(e))
+        raise _ParseAdaptError(create_error_response("semantic", str(e))) from e
+
+    return parsed_formula, model
+
+
+def _core_atl_star_checking(cgs: "CGS", formula: str) -> dict[str, Any]:
+    """Run ATL* model checking on a loaded model."""
+    try:
+        parsed_formula, model = _parse_and_adapt(cgs, formula)
+    except _ParseAdaptError as e:
+        return e.response
 
     try:
         satisfying_states = verifier.sat(parsed_formula, model)
@@ -63,16 +87,10 @@ def _core_synthesize_strategy(
     cgs: "CGS", formula: str, state: str | None
 ) -> dict[str, Any]:
     """Run ATL* strategy synthesis on a loaded model."""
-    parser = FormulaParserFactory.get_parser_instance("ATL_STAR")
-    parsed_formula = parser.parse(formula, n_agent=cgs.get_number_of_agents())
-    if parsed_formula is None:
-        error_msg = parser.errors[0] if parser.errors else "Syntax error in formula"
-        return create_error_response("syntax", error_msg)
-
     try:
-        model = cgs_adapter.adapt(cgs)
-    except ValueError as e:
-        return create_error_response("semantic", str(e))
+        parsed_formula, model = _parse_and_adapt(cgs, formula)
+    except _ParseAdaptError as e:
+        return e.response
 
     try:
         parsed_formula = verifier.require_simple_coalition(parsed_formula)
