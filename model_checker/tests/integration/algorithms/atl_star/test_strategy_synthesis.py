@@ -50,6 +50,16 @@ class TestSynthesizeStrategyCore:
         assert all(row["agent"] == 1 for row in moves)
         assert {(r["agent"], r["action"]) for r in moves if r["state"] == "s0"} == {(1, "a")}
 
+        transitions = result["strategy"]["transitions"]
+        s0_transitions = [t for t in transitions if t["source"]["state"] == "s0"]
+        assert s0_transitions, "expected at least one recorded transition out of s0"
+        for row in s0_transitions:
+            joint = dict(row["joint_action"])
+            assert joint[1] == "a"  # agent 1's committed move, present in every full joint action
+            assert row["target"]["state"] == "s1"  # the only way <<1>> X p can be won
+        # agent 2 isn't in the coalition, so every real response of theirs must be covered
+        assert {dict(row["joint_action"])[2] for row in s0_transitions} == {"IDLE", "O"}
+
     def test_reports_the_formula_does_not_hold_without_erroring(self, temp_file):
         """<<2>> X p doesn't hold at s0 (only agent 1 controls reaching s1) --
         a clean "doesn't hold" report, not an error."""
