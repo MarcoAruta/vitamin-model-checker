@@ -126,11 +126,16 @@ class TestSynthesizeStrategyRealEntryPoint:
         assert result["model"] == cgs_simple_parser.filename
 
     def test_an_explicit_state_is_threaded_through(self, cgs_simple_parser):
+        """<<1,2>> F (p & q) also holds at s0, so only checking `satisfied`
+        wouldn't catch `state` being silently ignored -- the witness's own
+        `start` (and the states it reaches) must reflect s2, not s0."""
         result = synthesize_strategy(
             "<<1,2>> F (p & q)", cgs_simple_parser.filename, state="s2"
         )
         assert "error" not in result
         assert result["satisfied"] is True
+        assert result["strategy"]["start"]["state"] == "s2"
+        assert all(row["state"] != "s0" for row in result["strategy"]["moves"])
 
     def test_nested_coalition_through_the_real_entry_point(self, cgs_simple_parser):
         result = synthesize_strategy("<<1>> F (<<2>> G p)", cgs_simple_parser.filename)
