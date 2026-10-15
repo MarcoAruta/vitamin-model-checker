@@ -10,7 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `ATL_STAR.synthesize_strategy(formula, filename, state=None)`, a separate
   entry point returning a JSON-serializable witness strategy
-  (`{"satisfied": bool, "strategy": [...] | None, ...}`), kept out of
+  (`{"satisfied": bool, "strategy": {"start": ..., "moves": [...],
+  "transitions": [...]} | None, ...}`), kept out of
   `model_checking` so that one stays focused on plain model checking. Only
   supports a formula whose outermost operator is a single coalition with
   no further coalition nested inside its path formula — broader formula
