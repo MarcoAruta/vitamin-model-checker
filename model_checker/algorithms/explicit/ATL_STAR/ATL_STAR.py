@@ -103,7 +103,7 @@ def _core_synthesize_strategy(
         return create_error_response("semantic", str(e))
 
     try:
-        result = verifier.witness(parsed_formula, model, state=state)
+        result = verifier.witness(parsed_formula, model, state=resolved_state)
     except ImportError as e:
         return create_error_response("environment", str(e))
     except ValueError as e:
