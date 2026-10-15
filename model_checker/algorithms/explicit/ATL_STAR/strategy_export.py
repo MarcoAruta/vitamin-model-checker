@@ -90,8 +90,11 @@ def export_strategy(witness: Witness) -> StrategyExport:
     not a flat read of `witness.strategy.choices`).
 
     Raises:
-        ValueError: `witness.nested` is non-empty (not supported yet), or
-            some reachable position's strategy entry isn't a joint action.
+        ValueError: `witness.nested` is non-empty (not supported yet); some
+            reachable position's strategy entry isn't a joint action, is
+            missing entirely, or leads only to `product.complete()`'s
+            rejecting sink — each would otherwise silently cut the export
+            short while still reporting the overall result as satisfied.
     """
     if witness.nested:
         raise ValueError("export_strategy does not support nested coalition witnesses yet")
@@ -111,7 +114,7 @@ def export_strategy(witness: Witness) -> StrategyExport:
         state, memory = cast("tuple[str, int]", position)
         coalition_action = witness.strategy.choices.get(position)
         if coalition_action is None:
-            continue  # not a winning position (shouldn't happen for a real witness)
+            raise ValueError(f"no strategy choice at reachable position {position!r}")
         coalition_action = _as_joint_action(coalition_action, position=(state, memory))
 
         for agent, action in sorted(coalition_action):
@@ -122,7 +125,9 @@ def export_strategy(witness: Witness) -> StrategyExport:
             if not coalition_action.issubset(full_action):
                 continue
             if not isinstance(target, tuple):
-                continue  # complete()'s rejecting sink: not a real successor
+                raise ValueError(
+                    f"winning strategy reaches the rejecting sink from {position!r}"
+                )
             target_state, target_memory = cast("tuple[str, int]", target)
             transitions.append(
                 {

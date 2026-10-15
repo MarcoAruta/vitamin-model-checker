@@ -117,11 +117,16 @@ def _core_synthesize_strategy(
             "strategy": None,
         }
 
+    try:
+        strategy = strategy_export.export_strategy(result)
+    except ValueError as e:
+        return create_error_response("semantic", str(e))
+
     return {
         "res": "Result: strategy synthesized",
         "initial_state": f"State {resolved_state}: True",
         "satisfied": True,
-        "strategy": strategy_export.export_strategy(result),
+        "strategy": strategy,
     }
 
 
