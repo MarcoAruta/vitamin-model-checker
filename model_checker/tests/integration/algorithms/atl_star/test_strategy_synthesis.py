@@ -125,6 +125,21 @@ class TestSynthesizeStrategyRealEntryPoint:
         assert result["formula"] == "<<1,2>> F (p & q)"
         assert result["model"] == cgs_simple_parser.filename
 
+    def test_transitions_support_continued_replay(self, cgs_simple_parser):
+        """An empty `transitions` list would otherwise pass every other
+        assertion here. Checks every transition's target has its own move
+        entry to continue replay from -- including s3, which this fixture's
+        automaton reaches at two different memory values depending on how
+        it got there, a real same-CGS-state-different-memory case."""
+        result = synthesize_strategy("<<1,2>> F (p & q)", cgs_simple_parser.filename)
+        strategy = result["strategy"]
+        positions = {(m["state"], m["memory"]) for m in strategy["moves"]}
+        assert strategy["transitions"]
+        for row in strategy["transitions"]:
+            target = (row["target"]["state"], row["target"]["memory"])
+            assert target in positions, f"no move recorded to continue replay from {target}"
+        assert {memory for state, memory in positions if state == "s3"} == {0, 1}
+
     def test_an_explicit_state_is_threaded_through(self, cgs_simple_parser):
         """<<1,2>> F (p & q) also holds at s0, so only checking `satisfied`
         wouldn't catch `state` being silently ignored -- the witness's own
