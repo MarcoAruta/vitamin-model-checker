@@ -13,7 +13,7 @@ A checked strategy must end in the explicit (T*, IDLE) fallback.
 """
 
 from collections import deque
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from model_checker.algorithms.explicit.NatATL.Recall.history_automaton import (
@@ -39,9 +39,9 @@ def _check_rule(
     *,
     states: tuple[str, ...],
     propositions: tuple[str, ...],
-    labels: dict,
-    successors: dict,
-    enabled: dict,
+    labels: Mapping,
+    successors: Mapping,
+    enabled: Mapping,
     agent: int,
     pattern: str,
     action: str,

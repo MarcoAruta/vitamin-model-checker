@@ -18,7 +18,7 @@ from model_checker.tests.helpers.model_helpers import assert_parse_structure
         ("OATL", "<1><5>F p", "<1>F p", 2),
         ("OL", "<J1>F p", "<J1>F", None),
         ("RBATL", "<1><5>F p", "<1>F p", 2),
-        ("NatSL", "E{3}x:(x,1)F a", "E{3}x:Fa", None),
+        ("NatSL", "E{3}x: (x, 1) F a", "E{3}x:Fa", None),
         ("CapATL", "<{1}>X p", "<{1}>X", 2),
         ("RABATL", "<1><5>F p", "<1>F p", 2),
         ("ATLF", "<1>F p", "<1>F", 2),
@@ -88,6 +88,11 @@ def test_formula_parser_valid_and_invalid(
         from model_checker.parsers.formulas.TOL import DemonicOp
 
         assert isinstance(result_valid, DemonicOp)
+    elif logic == "NatSL":
+        from model_checker.parsers.formulas.NatSL.parser import NatSLFormula
+
+        assert isinstance(result_valid, NatSLFormula)
+        assert result_valid.goal.operator in {"F", "G", "X"}
     else:
         assert_parse_structure(result_valid, description=logic)
         blob = str(result_valid)

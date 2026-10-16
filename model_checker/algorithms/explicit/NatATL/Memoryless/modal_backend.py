@@ -57,6 +57,7 @@ def universal_temporal_states(
     elif op == "G":
         target, invariant, least = set(), left, False
     else:
+        assert right is not None  # Required for U and W.
         target, invariant, least = right, left, op == "U"
 
     # F and U use least fixpoints.
@@ -168,10 +169,13 @@ def check_memoryless_formula(
 
     universe = {str(state) for state in cgs.states}
 
-    valuation = {
-        str(prop): states_where_prop_holds(cgs, str(prop))
-        for prop in cgs.atomic_propositions
-    }
+    valuation: dict[str, set[str]] = {}
+    for prop in cgs.atomic_propositions:
+        atom = str(prop)
+        matching_states = states_where_prop_holds(cgs, atom)
+        if matching_states is None:
+            raise ValueError(f"Undefined valuation for declared atom: {atom}")
+        valuation[atom] = matching_states
 
     def validate_atoms(node):
         if isinstance(node, str):

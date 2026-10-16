@@ -82,7 +82,7 @@ def exists_nash(
     try:
         return not is_not_nash(
             model=(
-                cgs.filename if hasattr(cgs, "filename") else ""
+                getattr(cgs, "filename", "")
             ),  # Best effort to get filename
             cgs=cgs,
             agents=agents,

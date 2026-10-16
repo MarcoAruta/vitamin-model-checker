@@ -1,164 +1,202 @@
-"""NatSL parser (PLY-based).
+"""Parser for the restricted NatSL fragment.
 
-What it handles:
-- NatSL formulas with quantifier lists, optional bounds, bindings, and simple
-  temporal expressions (F, !F).
-- Strategy variables and temporal atoms use the shared atomic proposition policy
-  (same alphabet as CGS models and NatATL).
+Concrete syntax::
 
-Behavior:
-- Returns an AST tuple on success; logs syntax issues at debug level.
+    E{2}x A{2}y: (x, 1)(y, 2) F a
+
+Optional whitespace is allowed around ``:``, bindings, goals, and between
+quantifiers. Bounds remain required in ``{k}`` form. Goals are limited to
+F/G/X and their negations. Quantifier order is preserved.
 """
 
-from model_checker.parsers.syntax_patterns import PROPOSITION_TOKEN
+from __future__ import annotations
 
-from ..parser_utils import (
-    natsl_temporal_atom_from_parsed_formula,
-    run_common_prechecks,
-    validate_natsl_temporal_atom,
+import re
+from dataclasses import dataclass
+
+
+class NatSLParseError(ValueError):
+    """Raised when a formula is outside the supported concrete syntax."""
+
+
+@dataclass(frozen=True)
+class Quantifier:
+    kind: str
+    variable: str
+    bound: int
+
+
+@dataclass(frozen=True)
+class TemporalGoal:
+    operator: str
+    proposition: str
+    negated: bool = False
+
+
+@dataclass(frozen=True)
+class NatSLFormula:
+    quantifiers: tuple[Quantifier, ...]
+    bindings: tuple[tuple[str, int], ...]
+    goal: TemporalGoal
+
+
+# Allow spaces around braces/variables and between adjacent quantifiers.
+_QUANTIFIER_RE = re.compile(
+    r"\s*([EA])\s*\{\s*(\d+)\s*\}\s*([A-Za-z_][A-Za-z0-9_]*?)"
+    r"(?=\s*(?:[EA]\s*\{\s*\d+\s*\}\s*[A-Za-z_]|$))"
 )
-from ..shared_parser import BaseLogicParser
+_BINDING_RE = re.compile(r"\s*\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,\s*(\d+)\s*\)")
+_GOAL_RE = re.compile(
+    r"\s*(!|not\s+)?\s*([FGX])\s*([A-Za-z_][A-Za-z0-9_.]*)\s*$",
+    re.IGNORECASE,
+)
 
 
-class NatSLParser(BaseLogicParser):
-    """Parser for NatSL formulas (quantifier lists, bounds, bindings, F/!F).
+def _strip_outer_negation(text: str) -> tuple[bool, str]:
+    text = text.strip()
+    if text.startswith("!(") and text.endswith(")"):
+        depth = 0
+        for index, char in enumerate(text[1:], start=1):
+            if char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+                if depth == 0 and index != len(text) - 1:
+                    return False, text
+        if depth == 0:
+            return True, text[2:-1]
+    return False, text
 
-    Use parse(formula) to get an AST tuple or None on invalid input.
-    """
+
+def parse_formula(text: str) -> NatSLFormula:
+    if not isinstance(text, str) or not text.strip():
+        raise NatSLParseError("NatSL formula must be a non-empty string")
+
+    outer_negated, text = _strip_outer_negation(text)
+    if ":" not in text:
+        raise NatSLParseError("Missing ':' between quantifier prefix and bindings")
+    prefix, suffix = text.split(":", 1)
+    prefix = prefix.strip()
+    suffix = suffix.strip()
+
+    quantifiers: list[Quantifier] = []
+    position = 0
+    while position < len(prefix):
+        match = _QUANTIFIER_RE.match(prefix, position)
+        if not match:
+            raise NatSLParseError(
+                f"Invalid quantifier near {prefix[position:]!r}; expected E{{k}}x or A{{k}}x"
+            )
+        kind, bound, variable = match.groups()
+        parsed_bound = int(bound)
+        if parsed_bound < 1:
+            raise NatSLParseError("Strategy-complexity bounds must be positive")
+        quantifiers.append(Quantifier(kind, variable, parsed_bound))
+        position = match.end()
+
+    if not quantifiers:
+        raise NatSLParseError("At least one strategy quantifier is required")
+
+    bindings: list[tuple[str, int]] = []
+    position = 0
+    while True:
+        match = _BINDING_RE.match(suffix, position)
+        if not match:
+            break
+        variable, agent = match.groups()
+        bindings.append((variable, int(agent)))
+        position = match.end()
+
+    goal_match = _GOAL_RE.match(suffix, position)
+    if not goal_match:
+        raise NatSLParseError(
+            "Unsupported goal; this prototype accepts F p, G p, X p and their negations"
+        )
+    negation, operator, proposition = goal_match.groups()
+
+    variables = [quantifier.variable for quantifier in quantifiers]
+    bound_variables = [variable for variable, _ in bindings]
+    agents = [agent for _, agent in bindings]
+    if len(set(variables)) != len(variables):
+        raise NatSLParseError("Each strategy variable must be quantified exactly once")
+    if sorted(variables) != sorted(bound_variables):
+        raise NatSLParseError(
+            "Every quantified variable must occur in exactly one binding"
+        )
+    if len(set(agents)) != len(agents):
+        raise NatSLParseError("Each agent may occur in only one binding")
+
+    goal_negated = bool(negation)
+    if outer_negated:
+        quantifiers = [
+            Quantifier("A" if q.kind == "E" else "E", q.variable, q.bound)
+            for q in quantifiers
+        ]
+        goal_negated = not goal_negated
+
+    return NatSLFormula(
+        tuple(quantifiers),
+        tuple(bindings),
+        TemporalGoal(operator.upper(), proposition, goal_negated),
+    )
+
+
+def format_formula(formula: NatSLFormula) -> str:
+    prefix = "".join(
+        f"{quantifier.kind}{{{quantifier.bound}}}{quantifier.variable}"
+        for quantifier in formula.quantifiers
+    )
+    bindings = "".join(f"({variable},{agent})" for variable, agent in formula.bindings)
+    negation = "!" if formula.goal.negated else ""
+    return f"{prefix}:{bindings}{negation}{formula.goal.operator}{formula.goal.proposition}"
+
+
+def goal_to_ctl(goal: TemporalGoal) -> str:
+    proposition = goal.proposition
+    if goal.operator == "F":
+        return f"AG !{proposition}" if goal.negated else f"AF {proposition}"
+    if goal.operator == "G":
+        return f"AF !{proposition}" if goal.negated else f"AG {proposition}"
+    if goal.operator == "X":
+        return f"AX !{proposition}" if goal.negated else f"AX {proposition}"
+    raise NatSLParseError(f"Unsupported temporal operator: {goal.operator}")
+
+
+class NatSLParser:
+    """Entry-point wrapper used by FormulaParserFactory."""
+
+    _RESERVED_TEMPORAL_ATOMS = {
+        "exist",
+        "forall",
+        "and",
+        "eventually",
+        "not",
+        "E",
+        "A",
+    }
 
     def __init__(self):
-        """Initialize the NatSL lexer and parser (PLY)."""
-        super().__init__()
+        self.errors = []
 
-        self.tokens.extend(
-            [
-                "COLON",
-                "COMMA",
-                "EXIST",
-                "FORALL",
-                "PROP",
-                "AGENT",
-                "BOUND",
-            ]
-        )
+    def parse(self, text):
+        self.errors = []
 
-        self.build(start="formula")
+        try:
+            formula = parse_formula(text)
+        except NatSLParseError as exc:
+            self.errors.append(str(exc))
+            return None
 
-    # === Tokens ===
+        atom = formula.goal.proposition
 
-    t_COLON = r":"
-    t_COMMA = r","
-    t_AGENT = r"\d+"
-    t_BOUND = r"\{\d+\}"
+        if atom in self._RESERVED_TEMPORAL_ATOMS:
+            self.errors.append(
+                f"Reserved keyword {atom!r} cannot be used as a temporal atom"
+            )
+            return None
 
-    def t_EXIST(self, t):
-        r"E(?![a-zA-Z0-9_])"
-        return t
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", atom):
+            self.errors.append(f"Invalid temporal atom {atom!r}")
+            return None
 
-    def t_FORALL(self, t):
-        r"A(?![a-zA-Z0-9_])"
-        return t
-
-    def t_AND(self, t):
-        # NatSL has no boolean connectives; treat word 'and' as a proposition candidate.
-        r"&&|\&"
-        return t
-
-    def t_OR(self, t):
-        r"\|\||\|"
-        return t
-
-    def t_IMPLIES(self, t):
-        r"->|>"
-        return t
-
-    def t_PROP(self, t):
-        reserved = {
-            "eventually": "EVENTUALLY",
-            "not": "NOT",
-        }
-        if t.value in reserved:
-            t.type = reserved[t.value]
-        else:
-            t.type = "PROP"
-        return t
-
-    # === Grammar ===
-    def p_formula(self, p):
-        """formula : quantifiers COLON binding_pairs temporal_expression"""
-        p[0] = (p[1], p[3], p[4])
-
-    def p_quantifiers(self, p):
-        """quantifiers : quantifier
-        | quantifiers quantifier"""
-        if len(p) == 2:
-            p[0] = [p[1]]
-        else:
-            p[0] = p[1] + [p[2]]
-
-    # Quantifier with optional bound (defaults to 1 when absent)
-    def p_quantifier(self, p):
-        """quantifier : EXIST opt_bound PROP
-        | FORALL opt_bound PROP"""
-        p[0] = (p[1], p[3], p[2])
-
-    # Optional bound: extract number if present, else use 1
-    def p_opt_bound(self, p):
-        """opt_bound : BOUND
-        | empty"""
-        if len(p) == 2 and p[1] is not None:
-            p[0] = int(p[1][1:-1])  # "{3}" -> 3
-        else:
-            p[0] = 1
-
-    def p_empty(self, p):
-        "empty :"
-        p[0] = None
-
-    def p_binding_pairs(self, p):
-        """binding_pairs : binding_pair
-        | binding_pairs binding_pair"""
-        if len(p) == 2:
-            p[0] = [p[1]]
-        else:
-            p[0] = p[1] + [p[2]]
-
-    def p_binding_pair(self, p):
-        """binding_pair : LPAREN PROP COMMA AGENT RPAREN"""
-        p[0] = (p[2], p[4])
-
-    def p_temporal_expression(self, p):
-        """temporal_expression : negation_expression
-        | EVENTUALLY PROP"""
-        if len(p) == 2:
-            p[0] = p[1]
-        else:
-            p[0] = ("F", p[2])
-
-    def p_negation_expression(self, p):
-        """negation_expression : NOT EVENTUALLY PROP"""
-        p[0] = ("!", "F", p[3])
-
-    # === Validation ===
-    def _post_validation(self, formula, result):
-        if result is None:
-            return False
-        atom = natsl_temporal_atom_from_parsed_formula(result)
-        if atom is None:
-            return True
-        valid, err = validate_natsl_temporal_atom(atom)
-        if not valid:
-            self.errors.append(err)
-            return False
-        return True
-
-    def _pre_validation(self, formula) -> tuple[bool, str | None]:
-        return run_common_prechecks(
-            formula,
-            coalition_required=False,
-            allow_negative_agents=False,
-            allowed_operators=set(":(),!{}"),
-        )
-
-
-NatSLParser.t_PROP.__doc__ = PROPOSITION_TOKEN
+        return formula

@@ -82,13 +82,21 @@ def process_transition_matrix_data_fixed(
         view, agents, strategies, appropriateness=appropriateness, guard_cache=guard_cache
     )
     indices = {s: i for i, s in enumerate(view.states)}
-    graph = [[0 for _ in view.states] for _ in view.states]
+    graph: list[list[int | str]] = [
+        [0 for _ in view.states] for _ in view.states
+    ]
     for state in view.states:
         for target, joint in view.outgoing[state]:
             if all(joint[a-1] == action for a, action in zip(agents, selected[state], strict=True)):
                 i, j = indices[state], indices[target]
                 value = "|".join(joint)
-                graph[i][j] = value if graph[i][j] == 0 else graph[i][j] + "," + value
+                previous = graph[i][j]
+                if previous == 0:
+                    graph[i][j] = value
+                elif isinstance(previous, str):
+                    graph[i][j] = previous + "," + value
+                else:
+                    raise ValueError("Invalid pruned transition cell")
     return graph
 
 def pruning(

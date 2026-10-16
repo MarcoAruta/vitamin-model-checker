@@ -1,23 +1,27 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "vitamin-model-checker"
-version = "1.6.3"
+version = "1.6.5"
 description = "The VITAMIN model checker python package"
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
     {name = "VITAMIN Team"}
 ]
-license = { file = "LICENSE" }
+# Custom source-available non-commercial terms (top-level LICENSE) plus MIT
+# for the vendored automata library under model_checker/automata/.
+license = "LicenseRef-VITAMIN-NonCommercial AND MIT"
+license-files = ["LICENSE", "model_checker/automata/LICENSE"]
 keywords = [
     "model-checking",
     "multi-agent-systems",
     "temporal-logic",
     "CTL",
     "ATL",
+    "ATL*",
     "LTL",
     "vitamin",
     "verification",
@@ -25,7 +29,6 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "License :: Other/Proprietary License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -38,6 +41,7 @@ dependencies = [
     "ply==3.11",
     "numpy>=1.26.0,<1.27.0",
     "pydantic>=2.7.0",
+    "spottl>=2.13; sys_platform == 'linux'",
 ]
 
 [project.urls]
@@ -55,6 +59,8 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "pytest-timeout>=2.0.0",
     "pytest-xdist>=3.6.0",
+    "basedpyright>=1.21.0",
+    "ruff>=0.6.0",
 ]
 docs = [
     "mkdocs>=1.5.0",
@@ -72,6 +78,7 @@ exclude = ["model_checker/tests*"]
 [project.entry-points."vitamin.parsers"]
 ATL = "model_checker.parsers.formulas.ATL.parser:ATLParser"
 ATLF = "model_checker.parsers.formulas.ATLF.parser:ATLFParser"
+ATL_STAR = "model_checker.parsers.formulas.ATL_STAR.parser:ATLStarParser"
 CapATL = "model_checker.parsers.formulas.CapATL.parser:CapATLParser"
 COTL = "model_checker.parsers.formulas.COTL.parser:COTLParser"
 CTL = "model_checker.parsers.formulas.CTL.parser:CTLParser"
@@ -80,8 +87,6 @@ NatATL = "model_checker.parsers.formulas.NatATL.parser:NatATLParser"
 NatATL_Recall = "model_checker.parsers.formulas.NatATL.parser:NatATLParser"
 NatATLF = "model_checker.parsers.formulas.NatATLF.parser:NatATLFParser"
 NatSL = "model_checker.parsers.formulas.NatSL.parser:NatSLParser"
-NatSL_Sequential = "model_checker.parsers.formulas.NatSL.parser:NatSLParser"
-NatSL_Alternated = "model_checker.parsers.formulas.NatSL.parser:NatSLParser"
 OATL = "model_checker.parsers.formulas.OATL.parser:OATLParser"
 OL = "model_checker.parsers.formulas.OL.parser:OLParser"
 RABATL = "model_checker.parsers.formulas.RABATL.parser:RABATLParser"
@@ -104,6 +109,7 @@ timedCGS = "model_checker.parsers.game_structures.timed_cgs.timed_cgs:TimedCGS"
 [project.entry-points."vitamin.benchmarks"]
 ATL = "model_checker.algorithms.explicit.ATL.ATL:model_checking"
 ATLF = "model_checker.algorithms.explicit.ATLF.ATLF:model_checking"
+ATL_STAR = "model_checker.algorithms.explicit.ATL_STAR.ATL_STAR:model_checking"
 CapATL = "model_checker.algorithms.explicit.CapATL.CapATL:model_checking"
 COTL = "model_checker.algorithms.explicit.COTL.COTL:model_checking"
 CTL = "model_checker.algorithms.explicit.CTL.CTL:model_checking"
@@ -111,8 +117,7 @@ LTL = "model_checker.algorithms.explicit.LTL.LTL:model_checking"
 NatATL = "model_checker.algorithms.explicit.NatATL.Memoryless.NatATL:model_checking"
 NatATL_Recall = "model_checker.algorithms.explicit.NatATL.Recall.natatl_recall:model_checking"
 NatATLF = "model_checker.algorithms.explicit.NatATLF.NatATL:model_checking"
-NatSL_Alternated = "model_checker.algorithms.explicit.NatSL.Alternated.natSL:model_checking"
-NatSL_Sequential = "model_checker.algorithms.explicit.NatSL.Sequential.natSL:model_checking"
+NatSL = "model_checker.algorithms.explicit.NatSL.core:model_checking"
 OATL = "model_checker.algorithms.explicit.OATL.OATL:model_checking"
 OL = "model_checker.algorithms.explicit.OL.OL:model_checking"
 RABATL = "model_checker.algorithms.explicit.RABATL.RABATL:model_checking"
@@ -126,6 +131,7 @@ IATL = "model_checker.algorithms.explicit.IATL.IATL:model_checking"
 [project.entry-points."vitamin.metadata"]
 ATL = "model_checker.parsers.formulas.ATL:METADATA"
 ATLF = "model_checker.parsers.formulas.ATLF:METADATA"
+ATL_STAR = "model_checker.parsers.formulas.ATL_STAR:METADATA"
 CapATL = "model_checker.parsers.formulas.CapATL:METADATA"
 COTL = "model_checker.parsers.formulas.COTL:METADATA"
 CTL = "model_checker.parsers.formulas.CTL:METADATA"
@@ -134,8 +140,6 @@ NatATL = "model_checker.parsers.formulas.NatATL:METADATA"
 NatATL_Recall = "model_checker.parsers.formulas.NatATL:METADATA"
 NatATLF = "model_checker.parsers.formulas.NatATLF:METADATA"
 NatSL = "model_checker.parsers.formulas.NatSL:METADATA"
-NatSL_Sequential = "model_checker.parsers.formulas.NatSL:METADATA"
-NatSL_Alternated = "model_checker.parsers.formulas.NatSL:METADATA"
 OATL = "model_checker.parsers.formulas.OATL:METADATA"
 OL = "model_checker.parsers.formulas.OL:METADATA"
 RABATL = "model_checker.parsers.formulas.RABATL:METADATA"
@@ -178,6 +182,7 @@ markers = [
     "natatl: NatATL algorithm tests",
     "oatl: OATL algorithm tests",
     "capatl: CapATL algorithm tests",
+    "atl_star: ATL* algorithm tests",
     "shared: Shared utility tests",
     "complex: Complex formula tests"
 ]
@@ -282,3 +287,4 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+"model_checker/tests/**/*.py" = ["E402"]  # imports after importorskip("spot")

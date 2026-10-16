@@ -4,6 +4,86 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- `ATL_STAR.synthesize_strategy(formula, filename, state=None)`, a separate
+  entry point returning a JSON-serializable witness strategy
+  (`{"satisfied": bool, "strategy": {"start": ..., "moves": [...],
+  "transitions": [...]} | None, ...}`), kept out of
+  `model_checking` so that one stays focused on plain model checking. Only
+  supports a formula whose outermost operator is a single coalition with
+  no further coalition nested inside its path formula — broader formula
+  shapes are rejected with a clear "semantic" error, deferred to a later
+  iteration. See `docs/ATL_STAR/algorithm.md`.
+
+### Changed
+
+- `spottl` (Spot's Python bindings, Linux only) is now a regular
+  dependency instead of living under the `atl_star` extra — `pip install
+  vitamin-model-checker` alone is enough for ATL* to work, no
+  `[atl_star]` extra needed.
+
+### Fixed
+
+- ATL_STAR's elimination algorithm could generate a fresh marker
+  proposition (`__atl_star_elim_N`) that collided with a real proposition
+  already declared in the model, silently corrupting the result for that
+  edge case. The marker is now checked against the model's declared
+  propositions before use.
+## [1.6.5] - 2026-09-15
+
+### Fixed
+
+- NatSL formulas with spaces around `:` or between quantifiers (for example
+  `E{1}x : (x, 1) F goal`) no longer fail with
+  `Invalid quantifier near ' '; expected E{k}x or A{k}x`. The parser now strips
+  the quantifier prefix and binding/goal suffix and accepts flexible whitespace
+  inside quantifier and binding tokens.
+
+## [1.6.4] - 2026-09-11
+
+### Added
+
+- ATL* model checking (`model_checker/algorithms/explicit/ATL_STAR/`), an
+  automata-theoretic checker (reduction to 2-player parity games) rather
+  than the coalition pre-image fixpoint every other logic here uses —
+  needed because ATL* allows a coalition operator to appear anywhere
+  inside a path formula, not only at the formula's own root. Runs over
+  plain `CGS`, no new game-structure type. Requires
+  [Spot](https://spot.lre.epita.fr/) — `pip install spottl` on Linux, or
+  conda-forge elsewhere; the rest of VITAMIN works without it, see
+  `docs/ATL_STAR/algorithm.md`.
+- `model_checker/automata/`, a vendored, logic-agnostic ω-automata and
+  parity-game-solving library (wraps Spot) backing ATL*'s reduction —
+  available to any future logic that needs the same machinery.
+- Restricted executable NatSL one-goal checker with ordered bounded strategy
+  quantification and shared `space`/`time` semantics.
+- Multi-character NatSL strategy variables.
+- NatSL semantic regression tests and dedicated CGS fixtures.
+- Runnable NatSL examples, including a logistics-robot case study.
+- Reproducible NatSL scalability benchmark with curated recorded results.
+- NatSL success payloads now include NatATL-style `res` / `initial_state`
+  fields alongside `Satisfiability` for backend compatibility.
+
+### Changed
+
+- Mixed bounded NatSL prefixes are evaluated directly instead of being
+  decomposed into independent NatATL checks.
+- NatSL uses exact action pruning: strategies selecting unavailable actions are
+  treated as inadmissible rather than repaired with an implicit idle action.
+- NatSL documentation now describes the implemented `E* A*` one-goal fragment
+  and its deliberate boundaries.
+- Public NatSL algorithm entry is a single `NatSL` entry point
+  (`core.model_checking` with `mode="space"|"time"`). The
+  `NatSL_Sequential` / `NatSL_Alternated` packages and entry points were removed.
+
+### Fixed
+
+- NatSL runnable examples used a misspelled `Unkown_Transition_by` header that
+  broke CGS loading; examples are synced with the correct fixtures.
+
 ## [1.6.3] - 2026-08-26
 
 ### Fixed

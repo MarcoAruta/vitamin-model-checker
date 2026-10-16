@@ -20,6 +20,10 @@ source .venv/bin/activate
 pip install -e ".[dev,docs]"
 ```
 
+ATL* and the automata library need Spot. On Linux, `spottl` is installed
+with the package above; on macOS use conda-forge (details in
+`docs/ATL_STAR/algorithm.md`). Other logics do not require Spot.
+
 ## Quick start
 
 ```python
@@ -43,8 +47,9 @@ parser = FormulaParserFactory.get_parser("CTL")
 
 ### Supported logics
 
-Built-in formula logics include ATL, ATLF, CapATL, COTL, CTL, IATL, ICTL, LTL,
-NatATL, NatATLF, NatSL, OATL, OL, RABATL, RBATL, TCTL, TOL, and Wallet_ATL. Model
+Built-in formula logics include ATL, ATLF, ATL_STAR, CapATL, COTL, CTL, IATL,
+ICTL, LTL, NatATL, NatATLF, NatSL, OATL, OL, RABATL, RBATL, TCTL, TOL, and
+Wallet_ATL. Model
 structures include CGS, BCGS, CostCGS, CapCGS, WalletCGS, and timedCGS. See
 `pyproject.toml` entry points (`vitamin.parsers`, `vitamin.models`,
 `vitamin.benchmarks`) for the full registry.

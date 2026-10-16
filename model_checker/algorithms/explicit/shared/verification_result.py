@@ -1,12 +1,11 @@
 """Result objects with optional witness or counterexample traces."""
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-# Preserve the existing public string-enum behavior; StrEnum changes __str__.
-class TraceType(str, Enum):  # noqa: UP042
+class TraceType(StrEnum):
     WITNESS = "witness"
     COUNTEREXAMPLE = "counterexample"
 
