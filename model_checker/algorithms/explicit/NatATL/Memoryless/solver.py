@@ -55,7 +55,7 @@ def solve_natatl_memoryless(
 
     actions_by_agent = {
         agent: list(dict.fromkeys(actions))
-        for agent, actions in zip(agents, actions_list)
+        for agent, actions in zip(agents, actions_list, strict=True)
     }
 
     checked = 0

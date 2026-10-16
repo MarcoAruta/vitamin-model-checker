@@ -5,7 +5,7 @@ strategies. The product graph already contains every possible opponent move.
 All paths are infinite: every reachable product node must have successors.
 """
 
-from typing import AbstractSet
+from collections.abc import Set
 
 from model_checker.algorithms.explicit.NatATL.Recall.recall_product import (
     ProductState,
@@ -24,8 +24,8 @@ def states_with_atom(product: RecallProduct, proposition: str) -> set[ProductSta
 def universal_temporal_states(
     product: RecallProduct,
     operator: str,
-    left: AbstractSet[ProductState],
-    right: AbstractSet[ProductState] | None = None,
+    left: Set[ProductState],
+    right: Set[ProductState] | None = None,
 ) -> set[ProductState]:
     """State-set semantics of AX, AF, AG, A[U], A[W] on the product.
 
@@ -96,8 +96,8 @@ def universal_temporal_states(
 def check_initial(
     product: RecallProduct,
     operator: str,
-    left: AbstractSet[ProductState],
-    right: AbstractSet[ProductState] | None = None,
+    left: Set[ProductState],
+    right: Set[ProductState] | None = None,
 ) -> bool:
     """Verdict of a temporal objective for the FIXED recall strategy profile."""
     return product.initial in universal_temporal_states(

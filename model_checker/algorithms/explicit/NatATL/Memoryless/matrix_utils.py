@@ -2,7 +2,6 @@
 
 from model_checker.parsers.game_structures.cgs.cgs_actions import (
     AGENT_ACTION_SEPARATOR,
-    CANONICAL_IDLE_TOKEN,
     JOINT_CHOICE_SEPARATOR,
     normalize_action_token,
     parse_joint_action_cell,

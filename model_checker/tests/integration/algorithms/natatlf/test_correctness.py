@@ -1,6 +1,8 @@
 """NatATLF compatibility with exact shared NatATL pruning."""
 import pytest
+
 from model_checker.algorithms.explicit.NatATLF.NatATL import model_checking
+
 
 @pytest.mark.integration
 class TestNatATLFCorrectness:

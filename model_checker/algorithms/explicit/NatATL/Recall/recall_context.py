@@ -1,6 +1,9 @@
 """Run-local Recall snapshot and caches; no state is attached to the mutable CGS."""
-from model_checker.algorithms.explicit.NatATL.Recall.history_automaton import HistoryRegex
+from model_checker.algorithms.explicit.NatATL.Recall.history_automaton import (
+    HistoryRegex,
+)
 from model_checker.parsers.game_structures.cgs.semantic_snapshot import prepare_cgs
+
 
 class RecallContext:
     def __init__(self, cgs):

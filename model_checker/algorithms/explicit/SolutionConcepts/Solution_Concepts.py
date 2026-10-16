@@ -5,10 +5,15 @@ Verifies Nash Equilibrium properties by checking for profitable unilateral devia
 
 import logging
 
-from model_checker.algorithms.explicit.LTL.pruning import pruning, process_transition_matrix_data
-from model_checker.algorithms.explicit.NatATL.strategy_errors import InadmissibleStrategy
+from model_checker.algorithms.explicit.LTL.pruning import (
+    process_transition_matrix_data,
+    pruning,
+)
 from model_checker.algorithms.explicit.LTL.strategies import (
     generate_deviations_for_agent,
+)
+from model_checker.algorithms.explicit.NatATL.strategy_errors import (
+    InadmissibleStrategy,
 )
 from model_checker.parsers.game_structures.cgs import CGSProtocol
 

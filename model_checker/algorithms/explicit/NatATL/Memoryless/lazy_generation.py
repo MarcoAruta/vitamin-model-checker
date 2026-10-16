@@ -4,7 +4,6 @@
 from collections.abc import Iterator, Mapping, Sequence
 
 
-
 def guards_exact_cost(
     cost: int,
     propositions: Sequence[str],

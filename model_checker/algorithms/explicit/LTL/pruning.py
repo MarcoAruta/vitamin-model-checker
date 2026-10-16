@@ -7,9 +7,14 @@ made nonserial by an inadmissible candidate. It does not certify completeness
 of the legacy strategy generator or general LTL-to-CTL equivalence.
 """
 import copy
+
 from model_checker.algorithms.explicit.CTL.CTL import model_checking
-from model_checker.algorithms.explicit.NatATL.Memoryless.matrix_utils import modify_matrix
-from model_checker.algorithms.explicit.NatATL.strategy_errors import InadmissibleStrategy
+from model_checker.algorithms.explicit.NatATL.Memoryless.matrix_utils import (
+    modify_matrix,
+)
+from model_checker.algorithms.explicit.NatATL.strategy_errors import (
+    InadmissibleStrategy,
+)
 from model_checker.parsers.game_structures.cgs import cgs_actions
 from model_checker.utils.literals import parse_state_set_literal
 

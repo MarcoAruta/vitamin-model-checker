@@ -4,12 +4,17 @@ No transition is invented and wildcard syntax is rejected, not expanded. A
 snapshot is private to a checking run, so mutation of the original model cannot
 invalidate caches inside that run.
 """
+from collections.abc import Mapping
 from dataclasses import dataclass
 from itertools import product
 from math import prod
 from types import MappingProxyType
-from typing import Any, Mapping
-from model_checker.parsers.game_structures.cgs.cgs_actions import parse_joint_action_cell
+from typing import Any
+
+from model_checker.parsers.game_structures.cgs.cgs_actions import (
+    parse_joint_action_cell,
+)
+
 
 def _validate_transitions(cgs: Any) -> dict[str, dict[tuple[str, ...], str]]:
     """Validate total deterministic t(q, a1, ..., an) over local action sets.
@@ -110,7 +115,7 @@ def prepare_cgs(cgs: Any) -> CGSSnapshot:
         if any(str(flag) not in ("0", "1") for row in cgs.matrix_prop for flag in row):
             raise ValueError("CGS proposition labels must be 0 or 1")
         n = cgs.get_number_of_agents()
-        labels = {s: frozenset(p for p, v in zip(props, cgs.matrix_prop[i]) if int(v))
+        labels = {s: frozenset(p for p, v in zip(props, cgs.matrix_prop[i], strict=True) if int(v))
                   for i, s in enumerate(states)}
         outgoing = {s: tuple((target, joint) for joint, target in row.items())
                     for s, row in transitions.items()}

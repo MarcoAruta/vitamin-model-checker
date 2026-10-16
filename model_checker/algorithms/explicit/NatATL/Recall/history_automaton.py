@@ -12,8 +12,11 @@ Boolean expressions support !, &&, ||, parentheses and T/false.
 import re
 from collections.abc import Iterable
 
+from model_checker.algorithms.explicit.NatATL.boolean_guards import (
+    BooleanGuard as _Boolean,
+)
+
 _IDENT = re.compile(r"[A-Za-z_][A-Za-z_0-9]*")
-from model_checker.algorithms.explicit.NatATL.boolean_guards import BooleanGuard as _Boolean
 
 
 class HistoryRegex:

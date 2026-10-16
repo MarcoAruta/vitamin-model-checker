@@ -6,8 +6,14 @@ Proof scope: docs/NatATL/RECALL_COMPLETENESS.md.
 Independent AST/cost/language tests: test_independent_regex_oracle.py.
 """
 import pytest
-from model_checker.algorithms.explicit.NatATL.Recall.recall_compositional import check_compositional_recall_ast
-from model_checker.algorithms.explicit.NatATL.Recall.recall_solver import solve_bounded_recall
+
+from model_checker.algorithms.explicit.NatATL.Recall.recall_compositional import (
+    check_compositional_recall_ast,
+)
+from model_checker.algorithms.explicit.NatATL.Recall.recall_solver import (
+    solve_bounded_recall,
+)
+
 
 class TwoAgentAdversarialCGS:
     """The goal is reachable but an opponent can prevent it forever."""

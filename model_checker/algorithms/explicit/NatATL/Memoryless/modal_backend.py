@@ -3,12 +3,11 @@
 
 from collections.abc import Callable
 
-from model_checker.algorithms.explicit.NatATL.strategy_complexity import (
-    individual_complexity,
-)
-
 from model_checker.algorithms.explicit.NatATL.Memoryless.lazy_generation import (
     collective_strategies,
+)
+from model_checker.algorithms.explicit.NatATL.strategy_complexity import (
+    individual_complexity,
 )
 
 
@@ -79,9 +78,13 @@ def make_modal_backend(cgs, model_path: str, *, appropriateness="first-match") -
     ``needed`` is only for callers explicitly requesting a partial decision.
     Never pass the initial state as ``needed`` for nested state-set operands.
     """
+    from model_checker.algorithms.explicit.NatATL.Memoryless.pruning import (
+        compile_memoryless_profile,
+    )
+    from model_checker.algorithms.explicit.NatATL.strategy_errors import (
+        InadmissibleStrategy,
+    )
     from model_checker.parsers.game_structures.cgs.semantic_snapshot import prepare_cgs
-    from model_checker.algorithms.explicit.NatATL.Memoryless.pruning import compile_memoryless_profile
-    from model_checker.algorithms.explicit.NatATL.strategy_errors import InadmissibleStrategy
     snapshot = prepare_cgs(cgs)
     names = snapshot.states
     states = set(names)
@@ -120,7 +123,7 @@ def make_modal_backend(cgs, model_path: str, *, appropriateness="first-match") -
                 continue
             seen.add(signature)
             successors = {s: {t for t, joint in snapshot.outgoing[s]
-                              if all(joint[a-1] == action for a, action in zip(agents, selected[s]))}
+                              if all(joint[a-1] == action for a, action in zip(agents, selected[s], strict=True))}
                           for s in names}
             backend.stats["Temporal Checks"] += 1
             winning_states = universal_temporal_states(successors, op, left, right)

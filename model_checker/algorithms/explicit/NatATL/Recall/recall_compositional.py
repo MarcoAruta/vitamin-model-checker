@@ -20,9 +20,11 @@ from model_checker.algorithms.explicit.NatATL.Recall.recall_appropriateness impo
 from model_checker.algorithms.explicit.NatATL.Recall.recall_product import (
     build_validated_recall_product,
 )
-from model_checker.algorithms.explicit.NatATL.Recall.recall_temporal import check_initial
 from model_checker.algorithms.explicit.NatATL.Recall.recall_solver import (
     solve_bounded_recall,
+)
+from model_checker.algorithms.explicit.NatATL.Recall.recall_temporal import (
+    check_initial,
 )
 
 _MODAL = re.compile(r"^<\{(?P<agents>\d+(?:,\d+)*)\},\s*(?P<bound>\d+)>(?P<op>[A-Za-z]+)$")
@@ -66,7 +68,9 @@ def check_compositional_recall_ast(
         raise ValueError("complete_supported_grammar must be a Boolean")
     if complete_supported_grammar and generator != "extended":
         raise ValueError("Complete supported-grammar checking requires generator='extended'")
-    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import (
+        RecallContext,
+    )
     context = RecallContext(cgs)
     view = context.snapshot
     states, propositions, n_agents = view.states, view.propositions, view.number_of_agents

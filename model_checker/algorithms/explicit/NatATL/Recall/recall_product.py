@@ -46,7 +46,9 @@ def build_recall_product(
     Unchosen coalition actions are removed; opponents remain unrestricted.
     An action unavailable at a reachable history makes the profile invalid.
     """
-    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import (
+        RecallContext,
+    )
     context = RecallContext(cgs) if context is None else context
     view = context.snapshot
     n_agents = view.number_of_agents
@@ -57,8 +59,6 @@ def build_recall_product(
     ):
         raise ValueError("Invalid or repeated coalition agent")
 
-    names = view.states
-    propositions = view.propositions
     state_labels = view.labels
 
     # Compile monitors once per rule, preserving coalition and rule ordering.
@@ -102,7 +102,7 @@ def build_recall_product(
         selected = []
 
         for agent, (begin, end, actions) in zip(
-            agents, rule_spans
+            agents, rule_spans, strict=True
         ):
             # Enabled actions in the ORIGINAL CGS state.
             # Opponent actions remain unrestricted.
@@ -142,12 +142,12 @@ def build_recall_product(
         retained = []
         for dest, joint in outgoing[node.state]:
             if all(joint[agent - 1] == action
-                   for agent, action in zip(agents, selected)):
+                   for agent, action in zip(agents, selected, strict=True)):
                 successor = ProductState(
                     dest,
                     tuple(
                         monitor.step(mem, state_labels[dest])
-                        for monitor, mem in zip(monitors, node.memory)
+                        for monitor, mem in zip(monitors, node.memory, strict=True)
                     ),
                 )
                 retained.append((successor, joint))
@@ -181,8 +181,9 @@ def build_validated_recall_product(
     from model_checker.algorithms.explicit.NatATL.Recall.recall_appropriateness import (
         validate_recall_profile,
     )
-
-    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import (
+        RecallContext,
+    )
     context = RecallContext(cgs) if context is None else context
     # Step 1: Check that every guarded-action pair is globally
     # appropriate, independently of the chosen initial state.

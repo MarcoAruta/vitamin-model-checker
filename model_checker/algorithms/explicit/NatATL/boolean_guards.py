@@ -4,6 +4,7 @@ T/true and false are constants. Knowledge operators are NOT accepted by this
 perfect-information evaluator. Caches must belong to a single verification run.
 """
 import re
+
 _IDENT = re.compile(r"[A-Za-z_][A-Za-z_0-9]*")
 _BOOL_TOKEN = re.compile(r"\s*(&&|\|\||!|\(|\)|[A-Za-z_][A-Za-z_0-9]*)")
 

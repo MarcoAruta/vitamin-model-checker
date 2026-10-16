@@ -5,7 +5,8 @@ from enum import Enum
 from typing import Any
 
 
-class TraceType(str, Enum):
+# Preserve the existing public string-enum behavior; StrEnum changes __str__.
+class TraceType(str, Enum):  # noqa: UP042
     WITNESS = "witness"
     COUNTEREXAMPLE = "counterexample"
 

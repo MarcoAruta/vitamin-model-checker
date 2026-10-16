@@ -7,9 +7,12 @@ in the meaning of an existing bounded query. No IDLE alternatives are inserted.
 import ast
 import copy
 from typing import Any
+
 from model_checker.algorithms.explicit.CTL.CTL import model_checking
 from model_checker.algorithms.explicit.NatATL.boolean_guards import BooleanGuard
-from model_checker.algorithms.explicit.NatATL.strategy_errors import InadmissibleStrategy
+from model_checker.algorithms.explicit.NatATL.strategy_errors import (
+    InadmissibleStrategy,
+)
 from model_checker.parsers.game_structures.cgs import CGS
 from model_checker.parsers.game_structures.cgs.cgs_actions import normalize_action_token
 from model_checker.parsers.game_structures.cgs.semantic_snapshot import prepare_cgs
@@ -31,7 +34,7 @@ def compile_memoryless_profile(snapshot, agents, strategies, *,
     cache = {} if guard_cache is None else guard_cache
     all_states = set(snapshot.states)
     selections = {s: [] for s in snapshot.states}
-    for agent, strategy in zip(agents, strategies):
+    for agent, strategy in zip(agents, strategies, strict=True):
         if not isinstance(strategy, dict):
             raise ValueError("Malformed memoryless strategy")
         rules = strategy.get("condition_action_pairs")
@@ -82,7 +85,7 @@ def process_transition_matrix_data_fixed(
     graph = [[0 for _ in view.states] for _ in view.states]
     for state in view.states:
         for target, joint in view.outgoing[state]:
-            if all(joint[a-1] == action for a, action in zip(agents, selected[state])):
+            if all(joint[a-1] == action for a, action in zip(agents, selected[state], strict=True)):
                 i, j = indices[state], indices[target]
                 value = "|".join(joint)
                 graph[i][j] = value if graph[i][j] == 0 else graph[i][j] + "," + value

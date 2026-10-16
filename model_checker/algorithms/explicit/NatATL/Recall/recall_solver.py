@@ -9,19 +9,18 @@ This backend is used by VITAMIN's public Recall compositional entry point.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
-from typing import AbstractSet
+from collections.abc import Iterable, Set
 from typing import Any
 
 from model_checker.algorithms.explicit.NatATL.Recall.recall_appropriateness import (
     InappropriateRecallRule,
 )
+from model_checker.algorithms.explicit.NatATL.Recall.recall_full_strategy_generation import (
+    collective_full_strategies,
+)
 from model_checker.algorithms.explicit.NatATL.Recall.recall_lazy_generation import (
     collective_strategies,
     profile_cost,
-)
-from model_checker.algorithms.explicit.NatATL.Recall.recall_full_strategy_generation import (
-    collective_full_strategies,
 )
 from model_checker.algorithms.explicit.NatATL.Recall.recall_product import (
     build_validated_recall_product,
@@ -36,8 +35,8 @@ def solve_bounded_recall(
     agents: Iterable[int],
     bound: int,
     operator: str,
-    left_states: AbstractSet[str],
-    right_states: AbstractSet[str] | None = None,
+    left_states: Set[str],
+    right_states: Set[str] | None = None,
     *,
     initial_state: str | None = None,
     generator: str = "canonical",
@@ -88,7 +87,9 @@ def solve_bounded_recall(
 
     # Read and validate the CGS once. The available actions are extracted with
     # the TOTAL number of agents, not the coalition cardinality.
-    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import (
+        RecallContext,
+    )
     context = RecallContext(cgs) if context is None else context
     view = context.snapshot
     names, props, n_agents, enabled = view.states, view.propositions, view.number_of_agents, view.enabled

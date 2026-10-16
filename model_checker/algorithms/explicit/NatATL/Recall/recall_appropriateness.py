@@ -87,7 +87,9 @@ def validate_recall_profile(
     Important: this checks all matching histories of the unpruned CGS,
     not merely those reachable under the supplied profile.
     """
-    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import (
+        RecallContext,
+    )
     context = RecallContext(cgs) if context is None else context
     v = context.snapshot
     states, props, count = v.states, v.propositions, v.number_of_agents
@@ -99,7 +101,7 @@ def validate_recall_profile(
     ):
         raise ValueError("Invalid or repeated coalition agent")
 
-    for agent, strategy in zip(agents, strategies):
+    for agent, strategy in zip(agents, strategies, strict=True):
         if not isinstance(strategy, dict):
             raise ValueError("Malformed recall strategy")
         rules = strategy.get("condition_action_pairs")
