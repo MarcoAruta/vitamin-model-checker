@@ -15,7 +15,6 @@ from typing import Any
 
 from model_checker.algorithms.explicit.NatATL.Recall.recall_appropriateness import (
     InappropriateRecallRule,
-    _read_cgs,
 )
 from model_checker.algorithms.explicit.NatATL.Recall.recall_lazy_generation import (
     collective_strategies,
@@ -26,9 +25,6 @@ from model_checker.algorithms.explicit.NatATL.Recall.recall_full_strategy_genera
 )
 from model_checker.algorithms.explicit.NatATL.Recall.recall_product import (
     build_validated_recall_product,
-)
-from model_checker.algorithms.explicit.NatATL.Recall.recall_cgs_semantics import (
-    validate_recall_cgs_semantics,
 )
 from model_checker.algorithms.explicit.NatATL.Recall.recall_temporal import (
     check_initial,
@@ -46,6 +42,7 @@ def solve_bounded_recall(
     initial_state: str | None = None,
     generator: str = "canonical",
     certify_restricted_exhaustion: bool = False,
+    context=None,
 ) -> dict[str, Any]:
     """Find a globally appropriate bounded strategy for a universal objective.
 
@@ -91,8 +88,10 @@ def solve_bounded_recall(
 
     # Read and validate the CGS once. The available actions are extracted with
     # the TOTAL number of agents, not the coalition cardinality.
-    validate_recall_cgs_semantics(cgs)
-    names, props, n_agents, _, _, enabled = _read_cgs(cgs)
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    context = RecallContext(cgs) if context is None else context
+    view = context.snapshot
+    names, props, n_agents, enabled = view.states, view.propositions, view.number_of_agents, view.enabled
     if any(agent < 1 or agent > n_agents for agent in coalition):
         raise ValueError(f"Coalition agent out of range 1..{n_agents}")
     universe = set(names)
@@ -108,11 +107,7 @@ def solve_bounded_recall(
         agent: sorted(set().union(*(enabled[state][agent] for state in names)))
         for agent in coalition
     }
-    for agent, actions in action_inventory.items():
-        if "IDLE" not in actions:
-            raise ValueError(
-                f"Agent {agent} has no IDLE action for the mandatory recall fallback"
-            )
+    context.require_idle(coalition)
 
     checked = 0
     appropriate = 0
@@ -123,7 +118,7 @@ def solve_bounded_recall(
         checked += 1
         try:
             product = build_validated_recall_product(
-                cgs, coalition, profile, initial_state=start
+                cgs, coalition, profile, initial_state=start, context=context
             )
         except InappropriateRecallRule:
             # Inadmissible candidates are expected during enumeration.
@@ -142,7 +137,8 @@ def solve_bounded_recall(
             result = {
                 "Satisfiability": True,
                 "Status": "WITNESS_FOUND",
-                "Complexity Bound": cost,
+                "Complexity Bound": bound,
+                "Witness Complexity": cost,
                 "Winning Strategy per agent": profile,
                 "Coalition": coalition,
                 "Candidates Examined": checked,

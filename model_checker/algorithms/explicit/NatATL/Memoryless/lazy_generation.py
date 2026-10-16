@@ -57,10 +57,6 @@ def individual_exact_cost(
     for first_cost in range(1, cost):
         for guard in guards_exact_cost(first_cost, propositions):
 
-            # An unconditional rule makes later rules redundant.
-            if guard == "T":
-                continue
-
             for action in dict.fromkeys(actions):
                 for tail in individual_exact_cost(
                     cost - first_cost,

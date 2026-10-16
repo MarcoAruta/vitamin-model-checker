@@ -1,131 +1,92 @@
-"""
-Matrix-based pruning for NatATL Memoryless verification.
+"""Exact pruning for bounded memoryless natural strategies.
 
-Applies condition-action strategies to restrict the CGS transition matrix,
-then runs CTL model checking on the pruned model. A memoryless strategy
-restricts transitions based on the current state, so the matrix can be
-pruned directly without tree expansion.
+The default is first-match appropriateness (Natural Strategic Ability, note 3).
+The stronger global rule condition is an explicit option, never a silent change
+in the meaning of an existing bounded query. No IDLE alternatives are inserted.
 """
-
-import copy
-import logging
-from typing import Any
 import ast
-
+import copy
+from typing import Any
 from model_checker.algorithms.explicit.CTL.CTL import model_checking
-from model_checker.algorithms.explicit.NatATL.Memoryless.matrix_utils import (
-    modify_matrix,
-)
+from model_checker.algorithms.explicit.NatATL.boolean_guards import BooleanGuard
+from model_checker.algorithms.explicit.NatATL.strategy_errors import InadmissibleStrategy
 from model_checker.parsers.game_structures.cgs import CGS
-from model_checker.utils.literals import parse_state_set_literal
+from model_checker.parsers.game_structures.cgs.cgs_actions import normalize_action_token
+from model_checker.parsers.game_structures.cgs.semantic_snapshot import prepare_cgs
 
-logger = logging.getLogger(__name__)
 
+def compile_memoryless_profile(snapshot, agents, strategies, *,
+                               appropriateness="first-match", guard_cache=None):
+    """Return coalition actions by state, validating against the ORIGINAL CGS.
+
+    The return value can be used as an exact behavioural cache key only after
+    this validation. Guard caches are local to one fixed snapshot/checking run.
+    """
+    if appropriateness not in ("first-match", "global"):
+        raise ValueError("Unknown appropriateness mode")
+    if len(agents) != len(strategies) or len(set(agents)) != len(agents):
+        raise ValueError("One strategy per distinct coalition agent is required")
+    if any(type(a) is not int or a < 1 or a > snapshot.number_of_agents for a in agents):
+        raise ValueError("Invalid coalition agent")
+    cache = {} if guard_cache is None else guard_cache
+    all_states = set(snapshot.states)
+    selections = {s: [] for s in snapshot.states}
+    for agent, strategy in zip(agents, strategies):
+        if not isinstance(strategy, dict):
+            raise ValueError("Malformed memoryless strategy")
+        rules = strategy.get("condition_action_pairs")
+        if not isinstance(rules, (list, tuple)) or not rules:
+            raise ValueError("Missing explicit (T, action) fallback")
+        if any(not isinstance(r, (tuple, list)) or len(r) != 2 for r in rules):
+            raise ValueError("Malformed guarded-action pair")
+        if not isinstance(rules[-1][0], str) or rules[-1][0].strip() != "T":
+            raise ValueError("Missing explicit (T, action) fallback")
+        covered = set()
+        selected = {}
+        for condition, action in rules:
+            if not isinstance(condition, str) or not isinstance(action, str) or not action.strip():
+                raise ValueError("Malformed guard or action")
+            if condition not in cache:
+                guard = BooleanGuard(condition, set(snapshot.propositions))
+                cache[condition] = frozenset(s for s in snapshot.states if guard(snapshot.labels[s]))
+            matched = set(cache[condition])
+            applicable = matched - covered
+            required = matched if appropriateness == "global" else applicable
+            token = normalize_action_token(action)
+            for state in sorted(required):
+                if token not in snapshot.enabled[state][agent]:
+                    raise InadmissibleStrategy(
+                        f"Action {action!r} is not enabled for agent {agent} in state {state!r} "
+                        f"under {appropriateness} appropriateness"
+                    )
+            for state in applicable:
+                selected[state] = token
+            covered.update(applicable)
+        if covered != all_states:
+            raise InadmissibleStrategy("Incomplete strategy: states not covered")
+        for state in snapshot.states:
+            selections[state].append(selected[state])
+    return {state: tuple(actions) for state, actions in selections.items()}
 
 
 def process_transition_matrix_data_fixed(
-    cgs: CGS,
-    model_path: str,
-    agents: list[int],
-    *strategies: dict[str, Any],
+    cgs: CGS, model_path: str, agents: list[int], *strategies: dict[str, Any],
+    appropriateness="first-match", snapshot=None, guard_cache=None,
 ) -> list[list]:
-    """Apply explicit natural memoryless strategies to a CGS."""
-
-    if len(strategies) != len(agents):
-        raise ValueError(
-            "One individual strategy is required per coalition agent"
-        )
-
-    graph = [row[:] for row in cgs.graph]
-    state_to_index = cgs.state_to_index
-    all_states = {str(s) for s in cgs.states}
-
-    for strategy_index, strategy in enumerate(strategies, start=1):
-        rules = strategy["condition_action_pairs"]
-
-        # A natural strategy must explicitly end with (T, action).
-        if not rules or rules[-1][0].strip() != "T":
-            raise ValueError(
-                f"Agent {agents[strategy_index - 1]}: "
-                "missing explicit (T, action) fallback"
-            )
-
-        covered_states = set()
-
-        for condition, action in rules:
-
-            # T is logical truth, not an atomic proposition.
-            if condition.strip() == "T":
-                state_set = set(all_states)
-
-            else:
-                if not hasattr(cgs, "_condition_cache"):
-                    cgs._condition_cache = {}
-
-                cache_key = (condition, model_path)
-
-                if cache_key not in cgs._condition_cache:
-                    cgs._condition_cache[cache_key] = model_checking(
-                        condition,
-                        model_path,
-                        preloaded_model=cgs,
-                    )
-
-                states_result = cgs._condition_cache[cache_key]
-                res_str = states_result.get("res", "")
-
-                if not res_str.startswith("Result: "):
-                    raise ValueError(
-                        f"Invalid condition {condition!r}: "
-                        f"{states_result}"
-                    )
-
-                state_set = parse_state_set_literal(
-                    res_str.split(": ", 1)[1]
-                )
-
-            # Ordered first-match semantics.
-            applicable_states = state_set - covered_states
-
-            if not applicable_states:
-                continue
-
-            graph = modify_matrix(
-                graph,
-                applicable_states,
-                action,
-                strategy_index,
-                agents,
-                num_agents=cgs.get_number_of_agents(),
-                state_to_index=state_to_index,
-                in_place=True,
-            )
-
-            # Reject choices that leave a state without successors.
-            for state in applicable_states:
-                row = graph[state_to_index[state]]
-
-                if not any(
-                    cell not in (0, "0", None)
-                    for cell in row
-                ):
-                    raise ValueError(
-                        f"Action {action!r} is not enabled "
-                        f"for agent {agents[strategy_index - 1]} "
-                        f"in state {state}"
-                    )
-
-            covered_states.update(applicable_states)
-
-        # No implicit idle transitions are inserted.
-        if covered_states != all_states:
-            raise ValueError(
-                "Incomplete strategy: states not covered "
-                f"{all_states - covered_states}"
-            )
-
+    """Materialize the exact pruned matrix; model_path is retained for API compatibility."""
+    view = prepare_cgs(cgs) if snapshot is None else snapshot
+    selected = compile_memoryless_profile(
+        view, agents, strategies, appropriateness=appropriateness, guard_cache=guard_cache
+    )
+    indices = {s: i for i, s in enumerate(view.states)}
+    graph = [[0 for _ in view.states] for _ in view.states]
+    for state in view.states:
+        for target, joint in view.outgoing[state]:
+            if all(joint[a-1] == action for a, action in zip(agents, selected[state])):
+                i, j = indices[state], indices[target]
+                value = "|".join(joint)
+                graph[i][j] = value if graph[i][j] == 0 else graph[i][j] + "," + value
     return graph
-
 
 def pruning(
     cgs: CGS, model_path: str, agents: list[int], formula: str, current_agents: list

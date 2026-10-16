@@ -14,7 +14,6 @@ from model_checker.algorithms.explicit.NatATL.Recall.history_automaton import (
 )
 from model_checker.parsers.game_structures.cgs.cgs_actions import (
     normalize_action_token,
-    parse_joint_action_cell,
 )
 
 
@@ -38,6 +37,7 @@ def build_recall_product(
     agents: list[int],
     strategies: list[dict],
     initial_state: str | None = None,
+    *, context=None,
 ) -> RecallProduct:
     """Prune a finite CGS using ordered regular-history strategies.
 
@@ -46,7 +46,10 @@ def build_recall_product(
     Unchosen coalition actions are removed; opponents remain unrestricted.
     An action unavailable at a reachable history makes the profile invalid.
     """
-    n_agents = cgs.get_number_of_agents()
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    context = RecallContext(cgs) if context is None else context
+    view = context.snapshot
+    n_agents = view.number_of_agents
     if len(agents) != len(strategies):
         raise ValueError("One strategy per coalition agent is required")
     if len(set(agents)) != len(agents) or any(
@@ -54,27 +57,9 @@ def build_recall_product(
     ):
         raise ValueError("Invalid or repeated coalition agent")
 
-    names = [str(s) for s in cgs.states]
-    if not names or len(set(names)) != len(names):
-        raise ValueError("Missing or duplicate CGS states")
-    if len(cgs.graph) != len(names) or any(
-        len(row) != len(names) for row in cgs.graph
-    ):
-        raise ValueError("Invalid CGS graph dimensions")
-
-    propositions = [str(p) for p in cgs.atomic_propositions]
-    if len(cgs.matrix_prop) != len(names) or any(
-        len(row) != len(propositions) for row in cgs.matrix_prop
-    ):
-        raise ValueError("Invalid CGS labelling dimensions")
-    state_labels = {
-        name: frozenset(
-            propositions[j]
-            for j, value in enumerate(cgs.matrix_prop[i])
-            if int(value) == 1
-        )
-        for i, name in enumerate(names)
-    }
+    names = view.states
+    propositions = view.propositions
+    state_labels = view.labels
 
     # Compile monitors once per rule, preserving coalition and rule ordering.
     monitors: list[HistoryRegex] = []
@@ -88,29 +73,12 @@ def build_recall_product(
         start = len(monitors)
         actions = []
         for pattern, action in pairs:
-            monitors.append(HistoryRegex(pattern, propositions))
+            monitors.append(context.monitor(pattern))
             actions.append(normalize_action_token(action))
         rule_spans.append((start, len(monitors), tuple(actions)))
 
-    # Parse complete joint actions using the TOTAL number of agents,
-    # never the coalition size.
-    outgoing: dict[str, list[tuple[str, tuple[str, ...]]]] = {}
-    for i, source in enumerate(names):
-        transitions: list[tuple[str, tuple[str, ...]]] = []
-        for j, cell in enumerate(cgs.graph[i]):
-            if cell is None or cell == 0 or cell == "0" or cell == "":
-                continue
-            if not isinstance(cell, str):
-                raise ValueError(f"Invalid transition cell at {source!r}")
-            if "*" in cell:
-                raise ValueError("Recall product does not yet support wildcard actions")
-            for joint in parse_joint_action_cell(cell, n_agents):
-                if len(joint) != n_agents:
-                    raise ValueError("Incorrect joint-action length")
-                transitions.append((names[j], tuple(joint)))
-        if not transitions:
-            raise ValueError(f"CGS is not total at state {source!r}")
-        outgoing[source] = transitions
+    # Shared validated transitions retain every complete opponent action profile.
+    outgoing = view.outgoing
 
     start_name = str(cgs.initial_state if initial_state is None else initial_state)
     if start_name not in state_labels:
@@ -202,6 +170,7 @@ def build_validated_recall_product(
     agents: list[int],
     strategies: list[dict],
     initial_state: str | None = None,
+    *, context=None,
 ) -> RecallProduct:
     """Build a recall product after global strategy validation.
 
@@ -213,12 +182,15 @@ def build_validated_recall_product(
         validate_recall_profile,
     )
 
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    context = RecallContext(cgs) if context is None else context
     # Step 1: Check that every guarded-action pair is globally
     # appropriate, independently of the chosen initial state.
     validate_recall_profile(
         cgs,
         agents,
         strategies,
+        context=context,
     )
 
     # Step 2: Only admissible strategies reach product construction.
@@ -227,4 +199,5 @@ def build_validated_recall_product(
         agents,
         strategies,
         initial_state=initial_state,
+        context=context,
     )

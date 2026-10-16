@@ -15,7 +15,7 @@ from model_checker.utils.error_handler import (
 logger = logging.getLogger(__name__)
 
 
-def model_checking(formula: str, model_path: str) -> dict[str, Any]:
+def model_checking(formula: str, model_path: str, *, appropriateness="first-match", return_all_states=True) -> dict[str, Any]:
     """Check NatATL under bounded memoryless natural strategies."""
 
     if not isinstance(formula, str) or not formula.strip():
@@ -29,7 +29,7 @@ def model_checking(formula: str, model_path: str) -> dict[str, Any]:
         )
 
     try:
-        return check_memoryless_formula(formula, model_path)
+        return check_memoryless_formula(formula, model_path, appropriateness=appropriateness, return_all_states=return_all_states)
 
     except FileNotFoundError:
         return create_error_response(

@@ -16,7 +16,6 @@ from typing import Any
 
 from model_checker.algorithms.explicit.NatATL.Recall.recall_appropriateness import (
     InappropriateRecallRule,
-    _read_cgs,
 )
 from model_checker.algorithms.explicit.NatATL.Recall.recall_product import (
     build_validated_recall_product,
@@ -67,7 +66,11 @@ def check_compositional_recall_ast(
         raise ValueError("complete_supported_grammar must be a Boolean")
     if complete_supported_grammar and generator != "extended":
         raise ValueError("Complete supported-grammar checking requires generator='extended'")
-    states, propositions, n_agents, labels, successors, _ = _read_cgs(cgs)
+    from model_checker.algorithms.explicit.NatATL.Recall.recall_context import RecallContext
+    context = RecallContext(cgs)
+    view = context.snapshot
+    states, propositions, n_agents = view.states, view.propositions, view.number_of_agents
+    labels, successors = view.labels, view.successors
     universe = frozenset(states)
     start = str(cgs.initial_state if initial_state is None else initial_state)
     if start not in universe:
@@ -112,7 +115,7 @@ def check_compositional_recall_ast(
         ]
         try:
             product = build_validated_recall_product(
-                cgs, coalition, fallback, initial_state=state
+                cgs, coalition, fallback, initial_state=state, context=context
             )
         except InappropriateRecallRule:
             # The sole possible profile is inadmissible, hence none can win.
@@ -181,6 +184,7 @@ def check_compositional_recall_ast(
                     a < 1 or a > n_agents for a in coalition
                 ):
                     raise ValueError("Invalid coalition in NatATL modality")
+                context.require_idle(coalition)
                 bound = int(m.group("bound"))
                 left = evaluate(node[1])
                 right = evaluate(node[2]) if op in {"U", "W"} else None
@@ -219,6 +223,7 @@ def check_compositional_recall_ast(
                         initial_state=state,
                         generator=generator,
                         certify_restricted_exhaustion=complete_supported_grammar,
+                        context=context,
                     )
                     if search["Satisfiability"] is True:
                         yes.add(state)
@@ -257,8 +262,14 @@ def check_compositional_recall_ast(
     output: dict[str, Any] = {
         "Satisfiability": answer,
         "Status": status,
-        "initial_state": f"Initial state {start}: {status}",
-        "res": f"Result: {answer if answer is not None else 'Inconclusive'}",
+        "initial_state": f"Initial state {start}: {answer if answer is not None else 'Inconclusive'}",
+        "res": ("Result: " + ("{" + ", ".join(repr(s) for s in sorted(evidence.true)) + "}"
+                              if evidence.true else "set()")),
+        "Appropriateness": "global",
+        "State Set Complete": evidence.true | evidence.false == universe,
+        "Proven True States": sorted(evidence.true),
+        "Undecided States": sorted(universe - evidence.true - evidence.false),
+        "Search Statistics": dict(context.stats),
         "State Verdicts": {
             state: ("TRUE" if state in evidence.true else "FALSE" if state in evidence.false else "INCONCLUSIVE")
             for state in states
@@ -271,6 +282,7 @@ def check_compositional_recall_ast(
         witness = witnesses[(ast, start)]
         output["Winning Strategy per agent"] = witness["Winning Strategy per agent"]
         output["Complexity Bound"] = witness["Complexity Bound"]
+        output["Witness Complexity"] = witness["Witness Complexity"]
     elif (ast, start) in refutations:
         cost, reason = refutations[(ast, start)]
         output["Complexity Bound"] = cost

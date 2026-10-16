@@ -11,9 +11,6 @@ require separate completeness arguments; this API does not claim them.
 
 from typing import Any
 
-from model_checker.algorithms.explicit.NatATL.Recall.recall_cgs_semantics import (
-    validate_recall_cgs_semantics,
-)
 from model_checker.algorithms.explicit.NatATL.Recall.recall_compositional import (
     check_compositional_recall,
 )
@@ -27,7 +24,6 @@ def _core_natatl_recall_checking(cgs: CGS, formula: str) -> dict[str, Any]:
     A strict deterministic/total CGS preflight precedes formula evaluation.
     Each nested strategic modality is checked with its own strategy search.
     """
-    validate_recall_cgs_semantics(cgs)
     return check_compositional_recall(
         cgs, formula, generator="extended", complete_supported_grammar=True
     )

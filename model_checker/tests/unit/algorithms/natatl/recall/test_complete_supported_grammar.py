@@ -1,26 +1,13 @@
-"""Sound negative exhaustion for the explicitly supported NatATL Recall grammar.
+"""Semantic examples, not a mechanized completeness proof.
 
-Run from the VITAMIN repository root:
-    python test_recall_complete_supported_grammar.py
-
-These are independent semantic examples, NOT a mechanized proof of the
-structural completeness theorem (see NATATL_RECALL_COMPLETENESS.md).
+Run from the repository root:
+    python -m pytest model_checker/tests/unit/algorithms/natatl/recall/test_complete_supported_grammar.py
+Proof scope: docs/NatATL/RECALL_COMPLETENESS.md.
+Independent AST/cost/language tests: test_independent_regex_oracle.py.
 """
-from itertools import product
-
-from model_checker.algorithms.explicit.NatATL.Recall.recall_compositional import (
-    check_compositional_recall_ast,
-)
-from model_checker.algorithms.explicit.NatATL.Recall.recall_full_regex_generation import (
-    history_guards_full_exact_cost,
-    regex_exact_raw_size,
-)
-from model_checker.algorithms.explicit.NatATL.Recall.recall_lazy_generation import (
-    regex_complexity,
-)
-from model_checker.algorithms.explicit.NatATL.Recall.history_automaton import HistoryRegex
+import pytest
+from model_checker.algorithms.explicit.NatATL.Recall.recall_compositional import check_compositional_recall_ast
 from model_checker.algorithms.explicit.NatATL.Recall.recall_solver import solve_bounded_recall
-
 
 class TwoAgentAdversarialCGS:
     """The goal is reachable but an opponent can prevent it forever."""
@@ -55,105 +42,53 @@ class TwoAgentForcedGoalCGS:
 
 
 
-def test_complete_supported_recall_grammar():
-    adversarial = TwoAgentAdversarialCGS()
-    negative = solve_bounded_recall(
-        adversarial, [1], 3, "F", {"goal"}, generator="extended",
-        certify_restricted_exhaustion=True,
-    )
-    assert negative["Satisfiability"] is False, negative
-    assert negative["Negative Certificate"] == "EXHAUSTIVE_BOUNDED_RECALL_ENUMERATION"
-    assert negative["Candidates Examined"] > 1, negative
-    print("PASS: k>minimum, reachable-but-unforceable goal gives exhaustive False")
 
-    # Same bounded solver WITHOUT supported-grammar completeness is conservative.
-    old = solve_bounded_recall(
-        adversarial, [1], 3, "F", {"goal"}, generator="extended"
-    )
-    assert old["Satisfiability"] is None, old
-    print("PASS: existing conservative direct solver interface is unchanged")
-
-    nested = ("!", ("<{1},3>F", "goal"))
-    response = check_compositional_recall_ast(
-        adversarial, nested, generator="extended", complete_supported_grammar=True
-    )
-    assert response["Satisfiability"] is True, response
-    assert response["Supported Grammar Complete"] is True, response
-    print("PASS: exhaustive negative can safely be negated in a nested formula")
-
-    for modal in (
-        ("<{1},3>X", "goal"),
-        ("<{1},3>G", "goal"),
-        ("<{1},3>F", "goal"),
-        ("<{1},3>U", "true", "goal"),
-        ("<{1},3>W", "goal", "goal"),
-    ):
-        decided = check_compositional_recall_ast(
-            adversarial, modal, generator="extended",
-            complete_supported_grammar=True,
-        )
-        assert decided["Satisfiability"] is False, (modal, decided)
-    weak_true = check_compositional_recall_ast(
-        adversarial, ("<{1},3>W", "true", "goal"),
-        generator="extended", complete_supported_grammar=True
-    )
-    assert weak_true["Satisfiability"] is True, weak_true
-    print("PASS: exhaustive X/G/F/U/W agree with universal temporal semantics")
-
-    forced = TwoAgentForcedGoalCGS()
-    win = check_compositional_recall_ast(
-        forced, ("<{1},1>F", "goal"), generator="extended",
-        complete_supported_grammar=True,
-    )
-    assert win["Satisfiability"] is True, win
-    loss = check_compositional_recall_ast(
-        forced, ("<{1},1>X", "goal"), generator="extended",
-        complete_supported_grammar=True,
-    )
-    assert loss["Satisfiability"] is False, loss
-    print("PASS: bound is strategy COST, not path depth")
-
-    # Nested strategic subformula results are exact state sets in complete mode.
-    inner = ("<{1},3>F", "goal")
-    outer = ("<{1},1>G", ("!", inner))
-    exact = check_compositional_recall_ast(
-        adversarial, outer, generator="extended", complete_supported_grammar=True
-    )
-    assert exact["Satisfiability"] in (True, False)
-    assert all(v != "INCONCLUSIVE" for v in exact["State Verdicts"].values()), exact
-    print("PASS: nested modalities have no unknown states in supported-complete mode")
-
-    try:
-        check_compositional_recall_ast(
-            adversarial, inner, generator="canonical", complete_supported_grammar=True
-        )
-    except ValueError as exc:
-        assert "generator='extended'" in str(exc), exc
-    else:
-        raise AssertionError("Incorrectly certified canonical generation")
-    print("PASS: incomplete canonical generator cannot claim completeness")
-
-    # Cross-check finite bounded normal-form coverage (an independent test, not
-    # the induction proof): for each raw AST up to size 4, an enumerated guard
-    # has no higher cost and agrees on all words of length <= 3.
-    labels = (frozenset(), frozenset({"p"}))
-    words = [w for length in range(4) for w in product(labels, repeat=length)]
-    all_guards = [g for k in range(1, 5)
-                  for g in history_guards_full_exact_cost(k, ["p"])]
-    semantic_representatives = {}
-    for guard in all_guards:
-        machine = HistoryRegex(guard, ["p"])
-        sig = tuple(machine.matches(word) for word in words)
-        semantic_representatives.setdefault(sig, regex_complexity(guard))
-    for raw_cost in range(1, 5):
-        for raw in regex_exact_raw_size(raw_cost, ["p"]):
-            actual_cost = regex_complexity(raw)
-            sig = tuple(HistoryRegex(raw, ["p"]).matches(word) for word in words)
-            assert sig in semantic_representatives, (raw, actual_cost)
-            assert semantic_representatives[sig] <= actual_cost, (raw, actual_cost)
-    print("PASS: raw regular ASTs up to size 4 covered at nonincreasing cost")
-    print("ALL SUPPORTED RECALL COMPLETENESS REGRESSIONS PASSED!")
+def complete(cgs, ast):
+    return check_compositional_recall_ast(cgs, ast, generator="extended", complete_supported_grammar=True)
 
 
-if __name__ == "__main__":
-    test_complete_supported_recall_grammar()
+def test_exhaustive_negative_certificate():
+    result = solve_bounded_recall(TwoAgentAdversarialCGS(), [1], 3, "F", {"goal"},
+                                  generator="extended", certify_restricted_exhaustion=True)
+    assert result["Satisfiability"] is False
+    assert result["Negative Certificate"] == "EXHAUSTIVE_BOUNDED_RECALL_ENUMERATION"
+    assert result["Candidates Examined"] > 1
+
+
+def test_uncertified_exhaustion_stays_unknown():
+    result = solve_bounded_recall(TwoAgentAdversarialCGS(), [1], 3, "F", {"goal"}, generator="extended")
+    assert result["Satisfiability"] is None
+
+
+def test_certified_negative_can_be_negated():
+    result = complete(TwoAgentAdversarialCGS(), ("!", ("<{1},3>F", "goal")))
+    assert result["Satisfiability"] is True
+    assert result["Supported Grammar Complete"] is True
+
+
+@pytest.mark.parametrize("modal,expected", [
+    (("<{1},3>X", "goal"), False), (("<{1},3>G", "goal"), False),
+    (("<{1},3>F", "goal"), False), (("<{1},3>U", "true", "goal"), False),
+    (("<{1},3>W", "goal", "goal"), False), (("<{1},3>W", "true", "goal"), True),
+])
+def test_universal_temporal_oracles(modal, expected):
+    assert complete(TwoAgentAdversarialCGS(), modal)["Satisfiability"] is expected
+
+
+def test_cost_bound_is_not_path_depth():
+    cgs = TwoAgentForcedGoalCGS()
+    assert complete(cgs, ("<{1},1>F", "goal"))["Satisfiability"] is True
+    assert complete(cgs, ("<{1},1>X", "goal"))["Satisfiability"] is False
+
+
+def test_nested_modalities_have_the_expected_truth_value():
+    outer = ("<{1},1>G", ("!", ("<{1},3>F", "goal")))
+    result = complete(TwoAgentAdversarialCGS(), outer)
+    assert result["Satisfiability"] is True
+    assert all(v != "INCONCLUSIVE" for v in result["State Verdicts"].values())
+
+
+def test_canonical_fragment_cannot_claim_complete_exhaustion():
+    with pytest.raises(ValueError, match="generator='extended'"):
+        check_compositional_recall_ast(TwoAgentAdversarialCGS(), ("<{1},3>F", "goal"),
+                                      generator="canonical", complete_supported_grammar=True)

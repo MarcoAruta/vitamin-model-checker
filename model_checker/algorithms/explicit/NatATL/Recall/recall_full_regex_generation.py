@@ -1,7 +1,8 @@
 """Structural enumeration of Reg(B(Prop)) for NatATL recall.
 
-This is a separate, experimental enumerator. It does NOT replace the
-verified canonical generator, or license definite negative MC verdicts.
+This enumerator is used for the explicitly supported complete grammar.
+Completeness scope and required assumptions are in docs/NatATL/RECALL_COMPLETENESS.md;
+it makes no claim for additional syntax or alternative cost metrics.
 
 Boolean alphabet: T, false, each proposition, !, &&, ||.
 Regex constructors: propositional guard, concatenation '.', union '|', '*'.

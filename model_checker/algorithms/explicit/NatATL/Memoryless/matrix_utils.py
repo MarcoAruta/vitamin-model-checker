@@ -76,7 +76,7 @@ def modify_matrix(
                     # Preserve wildcard transitions for legacy LTL callers.
                     continue
                 raise ValueError(
-                    "NatATL strict pruning does not yet support wildcard "
+                    "[MODEL] NatATL strict pruning does not yet support wildcard "
                     "joint-action profiles ('*'). Encode explicit actions "
                     "before performing bounded model checking."
                 )

@@ -134,7 +134,7 @@ def parse_joint_action_cell(
 
 
 def extract_actions_for_agents(
-    graph: list[list], agents: list[int], *, num_agents: int | None = None
+    graph: list[list], agents: list[int], *, num_agents: int
 ) -> dict[str, list[str]]:
     """Return ``agent{n}`` -> action tokens from graph cells for 1-based agent ids.
 
@@ -145,14 +145,15 @@ def extract_actions_for_agents(
     actions_per_agent = {f"agent{agent}": set() for agent in agents}
 
     valid_elements = (
-        str(elem) for row in graph for elem in row if elem != 0 and elem != "*"
+        str(elem) for row in graph for elem in row if elem not in (0, "0", "", None, "*")
     )
 
     # A coalition may omit agents. In that case its maximum index is NOT
     # the arity of a joint action. Callers with the CGS must supply its full
     # number of agents to distinguish legacy "AB" from a single-agent name.
-    if num_agents is None:
-        num_agents = max(agent_indices.values()) + 1 if agent_indices else 0
+    if type(num_agents) is not int or num_agents < 1:
+        raise ValueError("[MODEL] Number of agents must be positive")
+    validate_agent_numbers(agents, num_agents)
     if num_agents < max(agents, default=0):
         raise ValueError("Selected agent index exceeds total number of agents")
 
@@ -168,7 +169,7 @@ def extract_actions_for_agents(
                     actions_per_agent[f"agent{agent}"].add(token)
 
     return {
-        agent_key: list(actions) for agent_key, actions in actions_per_agent.items()
+        agent_key: sorted(actions) for agent_key, actions in actions_per_agent.items()
     }
 
 

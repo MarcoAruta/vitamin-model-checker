@@ -28,7 +28,11 @@ def solve_natatl_memoryless(
     cgs: CGSProtocol,
     model_path: str,
 ) -> dict[str, Any]:
-    """Search profiles by increasing collective complexity."""
+    """Search profiles by increasing collective complexity.
+
+    agent_actions is retained for the NatATLF compatibility calling convention;
+    actions_list is the authoritative per-agent action inventory in this solver.
+    """
 
     if k < 0:
         raise ValueError("Complexity bound must be nonnegative")
@@ -113,7 +117,7 @@ def solve_natatl_memoryless(
 
             return {
                 "Satisfiability": True,
-                "Complexity Bound": cost,
+                "Complexity Bound": k,
                 "Requested Complexity Bound": k,
                 "Witness Complexity": cost,
                 "Winning Strategy per agent": candidate,

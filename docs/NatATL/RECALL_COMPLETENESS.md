@@ -1,6 +1,11 @@
 # NatATL Recall: exhaustiveness for the implemented bounded grammar
 
-**Scope.** The theorem below applies to the implemented finite, *deterministic,
+**Scope.** The public Recall input contract also requires IDLE in every state
+for each agent quantified by a strategic modality (not for unquantified
+opponents). Missing IDLE is an explicit unsupported-model error, including
+at unreachable states and before semantic shortcut refutations.
+
+The theorem below applies to the implemented finite, *deterministic,
 total, rectangular* concurrent game structure (CGS) semantics, with a finite
 set `Prop` of valid, nonreserved atomic identifiers. It concerns **only** the
 following grammar and significant-pattern cost convention, not every syntactic
@@ -79,7 +84,9 @@ strategic operators is also two-valued, by structural induction over its AST.
 4. **Ordered strategies.** Replace each rule guard with its equivalent normal
    form without increasing cost; this preserves matching on *all histories*,
    global rule appropriateness, and chosen actions. If identical guards occur
-   more than once, only the first can be selected; remove later duplicates.
+   more than once in the non-fallback prefix, only the first can be selected;
+   remove later prefix duplicates. Never remove the mandatory final `(T*, IDLE)`
+   rule, even when an earlier `T*` rule shadows it: it still contributes cost 1.
    Every remaining guard costs at least 1, hence there are finitely many rules
    at bound `k`. `individual_full_exact_cost` enumerates every ordered list,
    action assignment, and positive rule-cost partition ending in the mandatory
@@ -127,3 +134,14 @@ sets rather than approximations.
 - The proof is a mathematical structural argument, **not** a machine-checked
   formalization in Lean. Unit tests, bounded regex-language equivalence, and
   independent semantic examples corroborate but do not replace that proof.
+
+
+## Review regression methodology
+
+`test_independent_regex_oracle.py` constructs its own Boolean/regex ASTs and cost
+function. It exhausts raw ASTs through size 4, and has explicit raw-size 8
+free-prefix cases. A Brzozowski-derivative/NFA product checks language equality
+on **all** finite words over the test alphabet, not only words of bounded length.
+This finite set of checked ASTs is still a test suite, not a proof for arbitrary k.
+Caches use the fixed model snapshot; no sampled-history equivalence is used to
+prune production Recall guards.

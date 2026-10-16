@@ -10,12 +10,6 @@ from model_checker.algorithms.explicit.NatATL.strategy_complexity import (
 from model_checker.algorithms.explicit.NatATL.Memoryless.lazy_generation import (
     collective_strategies,
 )
-from model_checker.algorithms.explicit.NatATL.Memoryless.pruning import (
-    process_transition_matrix_data_fixed,
-)
-from model_checker.parsers.game_structures.cgs.cgs_actions import (
-    parse_joint_action_cell,
-)
 
 
 def universal_temporal_states(
@@ -79,128 +73,65 @@ def universal_temporal_states(
         current = updated
 
 
-def make_modal_backend(cgs, model_path: str) -> Callable:
-    """Construct the strategic state-set evaluator for a loaded CGS."""
+def make_modal_backend(cgs, model_path: str, *, appropriateness="first-match") -> Callable:
+    """Build one run-local evaluator; full state-set results are the default.
 
-    names = [str(state) for state in cgs.states]
+    ``needed`` is only for callers explicitly requesting a partial decision.
+    Never pass the initial state as ``needed`` for nested state-set operands.
+    """
+    from model_checker.parsers.game_structures.cgs.semantic_snapshot import prepare_cgs
+    from model_checker.algorithms.explicit.NatATL.Memoryless.pruning import compile_memoryless_profile
+    from model_checker.algorithms.explicit.NatATL.strategy_errors import InadmissibleStrategy
+    snapshot = prepare_cgs(cgs)
+    names = snapshot.states
     states = set(names)
-    n_agents = cgs.get_number_of_agents()
+    guard_cache = {}
 
-    if len(cgs.graph) != len(names) or any(
-        len(row) != len(names) for row in cgs.graph
-    ):
-        raise ValueError("Invalid CGS transition matrix dimensions")
-
-    if any(
-        isinstance(cell, str) and "*" in cell
-        for row in cgs.graph
-        for cell in row
-    ):
-        raise ValueError(
-            "NatATL strict pruning does not support wildcard actions"
-        )
-
-    if any(
-        not any(cell not in (0, "0", None, "") for cell in row)
-        for row in cgs.graph
-    ):
-        raise ValueError("The original CGS must be total")
-
-    def available_actions(
-        coalition: list[int],
-    ) -> dict[int, list[str]]:
-        """Read joint actions using the full number of CGS agents."""
-
-        result = {agent: set() for agent in coalition}
-
-        for row in cgs.graph:
-            for cell in row:
-                if not isinstance(cell, str):
-                    continue
-
-                for joint in parse_joint_action_cell(cell, n_agents):
-                    for agent in coalition:
-                        result[agent].add(joint[agent - 1])
-
-        return {
-            agent: sorted(actions)
-            for agent, actions in result.items()
-        }
-
-    def backend(
-        agents: tuple[int, ...],
-        k: int,
-        op: str,
-        left: set[str],
-        right: set[str] | None,
-    ) -> set[str]:
-
-        if (
-            k < 0
-            or len(set(agents)) != len(agents)
-            or any(a < 1 or a > n_agents for a in agents)
-        ):
+    def backend(agents, k, op, left, right, *, needed=None):
+        if type(k) is not int or k < 0 or len(set(agents)) != len(agents):
             raise ValueError("Invalid coalition or complexity bound")
-
-        coalition = list(agents)
-        actions_by_agent = available_actions(coalition)
-
-        winners: set[str] = set()
+        if any(type(a) is not int or a < 1 or a > snapshot.number_of_agents for a in agents):
+            raise ValueError("Invalid coalition agent")
+        required_states = states if needed is None else set(needed)
+        if not required_states <= states:
+            raise ValueError("Unknown requested state")
+        actions_by_agent = {a: sorted(set().union(*(snapshot.enabled[s][a] for s in names)))
+                            for a in agents}
+        winners = set()
         backend.witnesses = {}
-
+        backend.stats = {"Candidates Examined": 0, "Duplicate Policies Skipped": 0,
+                         "Temporal Checks": 0}
+        seen = set()
         for candidate in collective_strategies(
-            agents=coalition,
-            actions_by_agent=actions_by_agent,
-            propositions=[str(p) for p in cgs.atomic_propositions],
-            bound=k,
+            agents=agents, actions_by_agent=actions_by_agent,
+            propositions=snapshot.propositions, bound=k,
         ):
+            backend.stats["Candidates Examined"] += 1
             try:
-                graph = process_transition_matrix_data_fixed(
-                    cgs,
-                    model_path,
-                    coalition,
-                    *candidate,
+                selected = compile_memoryless_profile(
+                    snapshot, agents, candidate, appropriateness=appropriateness,
+                    guard_cache=guard_cache,
                 )
-
-            except ValueError as exc:
-                if "not enabled" in str(exc).lower():
-                    continue
-                raise
-
-            successors = {
-                state: {
-                    names[j]
-                    for j, cell in enumerate(graph[i])
-                    if cell not in (0, "0", None, "")
-                }
-                for i, state in enumerate(names)
-            }
-
-            # A candidate that introduces a deadlock is inadmissible.
-            if any(not targets for targets in successors.values()):
+            except InadmissibleStrategy:
                 continue
-
-            winning_states = universal_temporal_states(
-                successors,
-                op,
-                left,
-                right,
-            )
-
-            # Record the first winning profile for each state.
-            # Enumeration is ordered by collective complexity.
+            signature = tuple(selected[state] for state in names)
+            if signature in seen:
+                backend.stats["Duplicate Policies Skipped"] += 1
+                continue
+            seen.add(signature)
+            successors = {s: {t for t, joint in snapshot.outgoing[s]
+                              if all(joint[a-1] == action for a, action in zip(agents, selected[s]))}
+                          for s in names}
+            backend.stats["Temporal Checks"] += 1
+            winning_states = universal_temporal_states(successors, op, left, right)
             for state in winning_states - winners:
                 backend.witnesses[state] = candidate
-
             winners.update(winning_states)
-
-            # No need to examine more profiles if all states win.
-            if winners == states:
+            if required_states <= winners:
                 break
-
         return winners
-
     backend.witnesses = {}
+    backend.stats = {}
     return backend
 
 
@@ -208,6 +139,7 @@ def make_modal_backend(cgs, model_path: str) -> Callable:
 def check_memoryless_formula(
     formula: str,
     model_path: str,
+    *, appropriateness="first-match", return_all_states=True,
 ) -> dict:
     """Compositional NatATL memoryless verification."""
 
@@ -238,14 +170,33 @@ def check_memoryless_formula(
         for prop in cgs.atomic_propositions
     }
 
-    modal_backend = make_modal_backend(cgs, model_path)
+    def validate_atoms(node):
+        if isinstance(node, str):
+            if node.lower() not in ("true", "false") and node not in ("T",) and node not in valuation:
+                raise ValueError(f"Unknown atomic proposition: {node}")
+        elif isinstance(node, tuple):
+            for child in node[1:]:
+                validate_atoms(child)
+    validate_atoms(ast)
+    modal_backend = make_modal_backend(cgs, model_path, appropriateness=appropriateness)
 
-    result_states = satisfying_states(
-        ast,
-        universe,
-        valuation,
-        modal_backend,
-    )
+    root_modal = (isinstance(ast, tuple) and isinstance(ast[0], str)
+                  and MODAL.fullmatch(ast[0]))
+    if not return_all_states and root_modal:
+        # Decide children exactly in the ORIGINAL CGS, then stop only the root search.
+        left = satisfying_states(ast[1], universe, valuation, modal_backend)
+        right = (satisfying_states(ast[2], universe, valuation, modal_backend)
+                 if len(ast) == 3 else None)
+        aliases = {"NEXT": "X", "EVENTUALLY": "F", "GLOBALLY": "G", "ALWAYS": "G",
+                   "UNTIL": "U", "WEAKUNTIL": "W"}
+        op = root_modal.group("op").upper()
+        result_states = modal_backend(
+            tuple(int(a) for a in root_modal.group("agents").split(",") if a),
+            int(root_modal.group("bound")), aliases.get(op, op), left, right,
+            needed={str(cgs.initial_state)},
+        ) & {str(cgs.initial_state)}
+    else:
+        result_states = satisfying_states(ast, universe, valuation, modal_backend)
 
     initial = str(cgs.initial_state)
     satisfied = initial in result_states
@@ -253,7 +204,9 @@ def check_memoryless_formula(
     result = {
         "Satisfiability": satisfied,
         "Satisfying States": sorted(result_states),
-        "res": f"Result: {tuple(sorted(result_states))}",
+        "res": "Result: " + ("{" + ", ".join(repr(s) for s in sorted(result_states)) + "}" if result_states else "set()"),
+        "Appropriateness": appropriateness,
+        "State Set Complete": bool(return_all_states or not root_modal),
         "initial_state": (
             f"Initial state {initial}: {satisfied}"
         ),
@@ -294,6 +247,10 @@ def check_memoryless_formula(
 
             result["Winning Strategy per agent"] = witness
             result["Witness Complexity"] = cost
-            result["Complexity Bound"] = cost
 
+
+    if not result["State Set Complete"]:
+        result["Queried States"] = [initial]
+        result["Satisfying Queried States"] = result.pop("Satisfying States")
+    result["Search Statistics"] = dict(modal_backend.stats)
     return result
