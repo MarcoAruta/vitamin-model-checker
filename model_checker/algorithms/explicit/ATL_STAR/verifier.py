@@ -6,14 +6,14 @@ non-trivial case is `Coalition(agents, psi)`: `psi` may itself contain
 nested `Coalition` subformulas, so `_eliminate` first replaces every
 maximal one with a fresh proposition labelling the states where it already
 holds (via `_solve_coalition`, which also records that inner coalition's
-witness into `Witness.nested`, see `witness` below) — what's left is pure
+witness into `Witness.nested`, see `witness` below), what's left is pure
 LTL, translatable via `Automaton.from_ltl`. The automaton is producted
 with the CGS, unfolded into a turn-based arena for `agents` vs. everyone
 else, and solved as a parity/Büchi/co-Büchi game; `Coalition`'s truth set
 is player 0's winning region projected onto the automaton's initial state.
 
 `_sat_coalition` needs a verdict for every CGS state, not just the model's
-declared initial one, so it probes the product from every state at once —
+declared initial one, so it probes the product from every state at once,
 `solve()`/`product()`/`complete()` already support that (multiple initial
 states, and a possibly-partial `Automaton.from_ltl` transition function).
 """
@@ -58,16 +58,16 @@ class Witness:
     start reading it.
 
     `strategy` is a Mealy machine keyed by `(cgs_state, automaton_state)`
-    pairs, not bare CGS states — the automaton state is the memory needed to
+    pairs, not bare CGS states, the automaton state is the memory needed to
     resolve the formula's temporal structure (e.g. whether an `U`'s left side
     already held). `start` is that pair at the state `witness()` was asked
     about; `strategy.move(start)` gives the coalition's first joint move.
-    `formula.agents` own that move jointly — split it onto one agent's own
+    `formula.agents` own that move jointly, split it onto one agent's own
     action via `Strategy.project`.
 
     `nested` carries, for every `Coalition` subformula eliminated out of
     `formula`'s path formula (allowed anywhere, arbitrarily deep, in ATL*),
-    that inner coalition's own witness — keyed first by its internal marker
+    that inner coalition's own witness, keyed first by its internal marker
     name (meaningless on its own), then by the CGS state it applies from.
     Most formulas have none; look it up via `nested_witnesses_at` rather than
     the marker names directly. Each inner `Witness` carries its own `nested`
@@ -90,15 +90,15 @@ class Witness:
         ]
 
     def advance(self, symbol: Hashable) -> Witness | None:
-        """Follow this witness one real step under `symbol` — the full joint
+        """Follow this witness one real step under `symbol`, the full joint
         action that occurred (this witness's coalition part plus whatever the
-        environment played), not just the coalition's own move — returning the
+        environment played), not just the coalition's own move, returning the
         `Witness` to continue with from wherever that leads.
 
         Automatically switches to a nested coalition's own witness once the
         resulting state has one available (`nested_witnesses_at`): useful for
         replaying a complete run through an eliminated subformula's ability being
-        exercised, not just reached — not required by the formula's own semantics,
+        exercised, not just reached, not required by the formula's own semantics,
         only for demonstrating one.
 
         Returns:
@@ -108,7 +108,7 @@ class Witness:
         Raises:
             ValueError: `symbol` has more than one possible successor, or the
                 resulting state has more than one nested witness available at
-                once — neither decidable from the state alone.
+                once, neither decidable from the state alone.
         """
         targets = self.product_ts.successors(self.start, symbol)
         if not targets:
@@ -179,7 +179,7 @@ def holds(formula: Formula, model: AdaptedCGS, state: str | None = None) -> bool
         ValueError: `state` isn't a state of `model`, or `formula` references
             a proposition name that isn't among `model`'s declared ones.
     """
-    state = _resolve_state(model, state)
+    state = resolve_state(model, state)
     return state in sat(formula, model)
 
 
@@ -201,6 +201,47 @@ def check(cgs: CGSProtocol, formula_text: str, state: str | None = None) -> bool
     return holds(formula, model, state=state)
 
 
+def require_simple_coalition(formula: Formula) -> Coalition:
+    """Validate that `formula` is a single top-level `Coalition` with no
+    further `Coalition` nested inside its own path formula.
+
+    Rejects the two formula shapes `synthesize_strategy` doesn't support
+    yet: a top-level boolean combination of coalitions (e.g. `<<1>> F p &
+    <<2>> G q`, which parses to `And(Coalition, Coalition)`, not a
+    `Coalition`), and a coalition nested inside another's path formula
+    (e.g. `<<1>> G <<2>> F p`), both would need more than one independent
+    witness strategy to represent faithfully.
+
+    Raises:
+        ValueError: `formula` isn't a `Coalition` at all, or its path
+            formula contains a nested `Coalition`.
+    """
+    if not isinstance(formula, Coalition):
+        # ValueError, not TypeError: this is a formula-shape/semantic rejection in
+        # atl_star's own vocabulary (same as every other Raises in this module),
+        # not a Python-level type error, VITAMIN's caller classifies it as such.
+        raise ValueError(  # noqa: TRY004
+            "only a formula whose outermost operator is a single coalition "
+            "(<<...>> ...) is supported"
+        )
+    if _contains_coalition(formula.path_formula):
+        raise ValueError(
+            "a coalition nested inside another's path formula is not supported yet"
+        )
+    return formula
+
+
+def _contains_coalition(formula: Formula) -> bool:
+    """Whether `formula` has a `Coalition` anywhere inside it (itself included)."""
+    if isinstance(formula, Coalition):
+        return True
+    if isinstance(formula, (Not, Next)):
+        return _contains_coalition(formula.operand)
+    if isinstance(formula, (And, Until)):
+        return _contains_coalition(formula.left) or _contains_coalition(formula.right)
+    return False
+
+
 def witness(
     formula: Coalition, model: AdaptedCGS, state: str | None = None
 ) -> Witness | None:
@@ -212,7 +253,7 @@ def witness(
         ValueError: `state` isn't a state of `model`, or an agent in
             `formula.agents` isn't among `model.players`.
     """
-    state = _resolve_state(model, state)
+    state = resolve_state(model, state)
     solution = _solve_coalition(formula, model)
     start = (state, solution.aut_init)
     if start not in solution.winning:
@@ -225,7 +266,12 @@ def witness(
     )
 
 
-def _resolve_state(model: AdaptedCGS, state: str | None) -> str:
+def resolve_state(model: AdaptedCGS, state: str | None) -> str:
+    """`state`, or `model`'s own initial state if `state` is `None`.
+
+    Raises:
+        ValueError: `state` isn't a state of `model`.
+    """
     if state is None:
         (state,) = model.transition_system.initial_states
         return state
@@ -329,9 +375,6 @@ def _eliminate(
         name = f"{_FRESH_PROP_PREFIX}{next(counter)}"
         while name in model.propositions:
             name = f"{_FRESH_PROP_PREFIX}{next(counter)}"
-        # A bulk dict copy plus updating only `satisfying` (typically much
-        # smaller than the full state count) is cheaper at CGS scale than a
-        # comprehension that re-touches every state to add a name to a few.
         extended = dict(labels)
         for state in satisfying:
             extended[state] = extended[state] | {name}
